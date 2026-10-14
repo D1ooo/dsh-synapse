@@ -86,9 +86,14 @@ window.__ModuleLoader__.load({
       // a double click restores the composed default (centered, CSS-positioned).
       const SWITCH_POSITION_KEY = 'dsh-synapse:switch-position'
       const DRAG_THRESHOLD = 4
+      // A drag ends with a synthesized click on the bar; a click that follows
+      // within the browser's double-click window pairs with it into a dblclick,
+      // so the reset gesture must ignore that window.
+      const DBLCLICK_AFTER_DRAG_MILLISECONDS = 600
       let drag = null
       let suppressClick = false
       let switchPosition = null
+      let lastDragEndAt = 0
       const storedPosition = () => {
         try {
           const raw = window.localStorage?.getItem(SWITCH_POSITION_KEY)
@@ -158,9 +163,12 @@ window.__ModuleLoader__.load({
           try { switchBar.releasePointerCapture?.(event.pointerId) } catch { /* capture may already be gone */ }
         }
         switchBar.classList.remove('is-dragging')
-        if (drag.moved && switchPosition !== null) {
-          suppressClick = true
-          try { window.localStorage?.setItem(SWITCH_POSITION_KEY, JSON.stringify(switchPosition)) } catch { /* storage may be unavailable */ }
+        if (drag.moved) {
+          lastDragEndAt = Date.now()
+          if (switchPosition !== null) {
+            suppressClick = true
+            try { window.localStorage?.setItem(SWITCH_POSITION_KEY, JSON.stringify(switchPosition)) } catch { /* storage may be unavailable */ }
+          }
         }
         drag = null
       }
@@ -170,9 +178,17 @@ window.__ModuleLoader__.load({
           try { switchBar.releasePointerCapture?.(event.pointerId) } catch { /* capture may already be gone */ }
         }
         switchBar.classList.remove('is-dragging')
+        if (drag.moved) lastDragEndAt = Date.now()
         drag = null
       }
-      const onSwitchDoubleClick = () => { clearPosition() }
+      const onSwitchDoubleClick = event => {
+        // A double click on a view button is a view toggle, never a reset.
+        if (typeof event?.target?.closest === 'function' && event.target.closest('button') !== null) return
+        // The drag's trailing click plus a quick follow-up click also reads as
+        // a double click to the browser; that pair must not reset the spot.
+        if (Date.now() - lastDragEndAt < DBLCLICK_AFTER_DRAG_MILLISECONDS) return
+        clearPosition()
+      }
       const onWindowResize = () => {
         if (switchPosition === null) return
         applyPosition(clampPosition(switchPosition.left, switchPosition.top, switchBar.getBoundingClientRect?.()))

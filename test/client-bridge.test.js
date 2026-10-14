@@ -301,10 +301,14 @@ async function loadBridge(options = {}) {
   }
 
   let factory
+  // Controllable clock for the drag-tail double-click guard; `client.js` reads
+  // no Date other than `Date.now`.
+  let nowValue = 1_000_000
   const context = {
     window: windowStub,
     document: documentStub,
     location: { origin: ORIGIN },
+    Date: { now: () => nowValue },
     queueMicrotask,
     fetch: async (url, init) => { record(calls.fetches, { url, body: JSON.parse(init.body) }); return { ok: true } },
     CSS: { escape: value => value },
@@ -340,6 +344,7 @@ async function loadBridge(options = {}) {
     storage: storageData,
     resize: () => { windowListeners.get('resize')?.() },
     setViewport: (width, height) => { windowStub.innerWidth = width; windowStub.innerHeight = height },
+    setNow: value => { nowValue = value },
     anchorScrolled: () => anchorScrolled,
     chatChanged: () => { for (const listener of [...chatListeners]) listener() },
     listChanged: () => { for (const listener of [...listListeners]) listener() },
@@ -635,6 +640,42 @@ test('captures the pointer only once the press becomes a drag', async () => {
 
   bar.dispatch('pointerup', { pointerId: 1 })
   assert.equal(bar.releaseCalls, 1)
+})
+
+test('never resets when a double click lands on a view button', async () => {
+  const bridge = await loadBridge({ storedValue: JSON.stringify({ left: 100, top: 50 }) })
+  const bar = bridge.switchBar()
+
+  bar.dispatch('dblclick', { target: { closest: () => ({ tagName: 'BUTTON' }) } })
+
+  assert.equal(bar.style.left, '100px')
+  assert.ok(bridge.storage.has('dsh-synapse:switch-position'))
+})
+
+test('ignores the double click the drag tail pairs with a quick follow-up click', async () => {
+  const bridge = await loadBridge()
+  const bar = bridge.switchBar()
+  bar.rect = { left: 500, top: 40, width: 180, height: 34 }
+
+  bar.dispatch('pointerdown', { pointerId: 1, button: 0, clientX: 600, clientY: 57 })
+  bar.dispatch('pointermove', { pointerId: 1, clientX: 680, clientY: 57 })
+  bar.dispatch('pointerup', { pointerId: 1 })
+  assert.equal(bar.style.left, '580px')
+
+  // The drag's synthesized click plus this pair reads as a double click; the
+  // reset gesture must stay quiet inside the browser's pairing window.
+  bridge.setNow(1_000_000 + 300)
+  bar.dispatch('dblclick', {})
+
+  assert.equal(bar.style.left, '580px')
+  assert.ok(bridge.storage.has('dsh-synapse:switch-position'))
+
+  // Past the window, a real double click still resets.
+  bridge.setNow(1_000_000 + 700)
+  bar.dispatch('dblclick', {})
+
+  assert.equal(bar.style.left, '')
+  assert.equal(bridge.storage.has('dsh-synapse:switch-position'), false)
 })
 
 test('keeps a sub-threshold press a click that still switches the view', async () => {
