@@ -34,6 +34,12 @@ function element(tagName) {
     removed: false,
     textContent: '',
     style: {},
+    // The drag feature reads the layout rect at gesture start; tests set one
+    // per element before dispatching pointer events.
+    rect: { left: 0, top: 0, width: 0, height: 0 },
+    getBoundingClientRect() { return node.rect },
+    setPointerCapture() {},
+    releasePointerCapture() {},
     dataset: {},
     className: '',
     classList: {
@@ -271,8 +277,20 @@ async function loadBridge(options = {}) {
   }
   documentStub.body.hasAttribute = () => false
 
+  // Browser-profile storage double holding the drag feature's remembered spot.
+  const storageData = new Map()
+  if (options.storedValue !== undefined) storageData.set('dsh-synapse:switch-position', options.storedValue)
+  const storage = {
+    getItem: key => storageData.has(key) ? storageData.get(key) : null,
+    setItem: (key, value) => { storageData.set(key, String(value)) },
+    removeItem: key => { storageData.delete(key) },
+  }
+
   const windowStub = {
     location: { origin: ORIGIN },
+    innerWidth: 1280,
+    innerHeight: 800,
+    localStorage: storage,
     addEventListener: (type, listener) => { windowListeners.set(type, listener) },
     removeEventListener: type => { windowListeners.delete(type) },
     // The bridge's only timers are the overlay-open fallback and the anchor
@@ -318,6 +336,10 @@ async function loadBridge(options = {}) {
     message: data => windowListeners.get('message')?.({ origin: ORIGIN, data: { source: 'dsh-synapse', ...data } }),
     shell: () => documentStub.body.children[0],
     overlay: () => documentStub.body.children[0]?.querySelector('.dsh-synapse-overlay'),
+    switchBar: () => documentStub.body.children[0]?.querySelector('.dsh-synapse-switch'),
+    storage: storageData,
+    resize: () => { windowListeners.get('resize')?.() },
+    setViewport: (width, height) => { windowStub.innerWidth = width; windowStub.innerHeight = height },
     anchorScrolled: () => anchorScrolled,
     chatChanged: () => { for (const listener of [...chatListeners]) listener() },
     listChanged: () => { for (const listener of [...listListeners]) listener() },
@@ -577,4 +599,100 @@ test('declares the client package of every service the bridge injects', async ()
     assert.ok(providers[service] !== undefined, `${service} has no known provider package`)
     assert.ok(manifest.dsh.client.inject.includes(providers[service]), `${service} needs ${providers[service]} in dsh.client.inject`)
   }
+})
+
+test('moves the switch beyond the drag threshold and remembers the spot', async () => {
+  const bridge = await loadBridge()
+  const bar = bridge.switchBar()
+  bar.rect = { left: 500, top: 40, width: 180, height: 34 }
+
+  bar.dispatch('pointerdown', { pointerId: 1, button: 0, clientX: 600, clientY: 57 })
+  bar.dispatch('pointermove', { pointerId: 1, clientX: 680, clientY: 97 })
+
+  assert.equal(bar.style.left, '580px')
+  assert.equal(bar.style.top, '80px')
+  assert.equal(bar.style.transform, 'none')
+
+  bar.dispatch('pointerup', { pointerId: 1 })
+
+  assert.equal(bridge.storage.get('dsh-synapse:switch-position'), '{"left":580,"top":80}')
+})
+
+test('keeps a sub-threshold press a click that still switches the view', async () => {
+  const bridge = await loadBridge()
+  const bar = bridge.switchBar()
+  bar.rect = { left: 500, top: 40, width: 180, height: 34 }
+
+  bar.dispatch('pointerdown', { pointerId: 1, button: 0, clientX: 600, clientY: 57 })
+  bar.dispatch('pointermove', { pointerId: 1, clientX: 602, clientY: 57 })
+  bar.dispatch('pointerup', { pointerId: 1 })
+
+  assert.equal(bar.style.left, undefined)
+  assert.equal(bridge.storage.get('dsh-synapse:switch-position'), undefined)
+
+  bridge.shell().querySelector('[data-view="map"]').dispatch('click')
+
+  assert.equal(bridge.overlay().hidden, false)
+})
+
+test('suppresses the click a finished drag would otherwise deliver', async () => {
+  const bridge = await loadBridge()
+  const bar = bridge.switchBar()
+  bar.rect = { left: 500, top: 40, width: 180, height: 34 }
+
+  bar.dispatch('pointerdown', { pointerId: 1, button: 0, clientX: 600, clientY: 57 })
+  bar.dispatch('pointermove', { pointerId: 1, clientX: 700, clientY: 57 })
+  bar.dispatch('pointerup', { pointerId: 1 })
+  bridge.shell().querySelector('[data-view="map"]').dispatch('click')
+
+  assert.equal(bridge.overlay().hidden, true)
+
+  // A fresh press clears the suppression so the next click works again.
+  bar.dispatch('pointerdown', { pointerId: 2, button: 0, clientX: 700, clientY: 57 })
+  bar.dispatch('pointerup', { pointerId: 2 })
+  bridge.shell().querySelector('[data-view="map"]').dispatch('click')
+
+  assert.equal(bridge.overlay().hidden, false)
+})
+
+test('restores a remembered position on mount and clamps it to the viewport', async () => {
+  const bridge = await loadBridge({ storedValue: JSON.stringify({ left: 9999, top: -40 }) })
+
+  assert.equal(bridge.switchBar().style.left, '1280px')
+  assert.equal(bridge.switchBar().style.top, '0px')
+  assert.equal(bridge.switchBar().style.transform, 'none')
+})
+
+test('ignores an unreadable remembered position', async () => {
+  const malformed = await loadBridge({ storedValue: '{not json' })
+  assert.equal(malformed.switchBar().style.left, undefined)
+
+  const wrongShape = await loadBridge({ storedValue: JSON.stringify({ left: 'x', top: 1 }) })
+  assert.equal(wrongShape.switchBar().style.left, undefined)
+})
+
+test('re-clamps the remembered position when the window shrinks', async () => {
+  const bridge = await loadBridge({ storedValue: JSON.stringify({ left: 1100, top: 700 }) })
+  const bar = bridge.switchBar()
+  bar.rect = { left: 1100, top: 700, width: 180, height: 34 }
+  assert.equal(bar.style.left, '1100px')
+
+  bridge.setViewport(800, 600)
+  bridge.resize()
+
+  assert.equal(bar.style.left, '620px')
+  assert.equal(bar.style.top, '566px')
+})
+
+test('restores the composed default position on a double click', async () => {
+  const bridge = await loadBridge({ storedValue: JSON.stringify({ left: 100, top: 50 }) })
+  const bar = bridge.switchBar()
+  assert.equal(bar.style.left, '100px')
+
+  bar.dispatch('dblclick', {})
+
+  assert.equal(bar.style.left, '')
+  assert.equal(bar.style.top, '')
+  assert.equal(bar.style.transform, '')
+  assert.equal(bridge.storage.has('dsh-synapse:switch-position'), false)
 })

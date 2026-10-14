@@ -67,6 +67,8 @@ corepack pnpm dsh web --port 0
 
 Open the top **Session Map** switch after startup. Do not run two `dsh web` processes that share the same profile.
 
+The top Dialogue/Session Map switch can be dragged anywhere inside the window, remembers its spot, and resets to the default centered position with a double click.
+
 ## Usage
 
 1. Select a working directory in DSH or open an existing session.

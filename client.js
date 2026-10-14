@@ -53,7 +53,7 @@ window.__ModuleLoader__.load({
         }
       }
       const style = document.createElement('style')
-      style.textContent = '.dsh-synapse-switch{position:fixed;z-index:80;top:calc(var(--dsh-frame-chrome-top,var(--dsh-frame-top-clearance,0px)) + 12px);left:50%;display:flex;gap:2px;transform:translateX(-50%);border:1px solid #d1d5db;border-radius:999px;background:rgba(255,255,255,.96);padding:3px;backdrop-filter:blur(10px)}.dsh-synapse-switch button{height:28px;border:0;border-radius:999px;background:transparent;padding:0 11px;color:#6b7280;font:600 12px Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap}.dsh-synapse-switch button:hover{background:#f3f4f6;color:#111827}.dsh-synapse-switch button.active{background:#111827;color:#fff}.dsh-synapse-switch button:focus-visible{outline:2px solid #111827;outline-offset:2px}.dsh-synapse-overlay{position:fixed;z-index:100;inset:var(--dsh-frame-chrome-top,var(--dsh-frame-top-clearance,0px)) 0 0 0;background:#f5f7fa}.dsh-synapse-overlay.is-opening{visibility:hidden}.dsh-synapse-overlay[hidden]{display:none}.dsh-synapse-overlay iframe{display:block;width:100%;height:100%;border:0}html[data-fullscreen] .dsh-synapse-overlay{top:0}html[data-fullscreen] .dsh-synapse-switch{top:12px}'
+      style.textContent = '.dsh-synapse-switch{position:fixed;z-index:80;top:calc(var(--dsh-frame-chrome-top,var(--dsh-frame-top-clearance,0px)) + 12px);left:50%;display:flex;gap:2px;transform:translateX(-50%);border:1px solid #d1d5db;border-radius:999px;background:rgba(255,255,255,.96);padding:3px;backdrop-filter:blur(10px);cursor:grab;user-select:none;touch-action:none}.dsh-synapse-switch button{height:28px;border:0;border-radius:999px;background:transparent;padding:0 11px;color:#6b7280;font:600 12px Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap}.dsh-synapse-switch button:hover{background:#f3f4f6;color:#111827}.dsh-synapse-switch button.active{background:#111827;color:#fff}.dsh-synapse-switch button:focus-visible{outline:2px solid #111827;outline-offset:2px}.dsh-synapse-switch.is-dragging{cursor:grabbing}.dsh-synapse-switch.is-dragging button{cursor:grabbing}.dsh-synapse-overlay{position:fixed;z-index:100;inset:var(--dsh-frame-chrome-top,var(--dsh-frame-top-clearance,0px)) 0 0 0;background:#f5f7fa}.dsh-synapse-overlay.is-opening{visibility:hidden}.dsh-synapse-overlay[hidden]{display:none}.dsh-synapse-overlay iframe{display:block;width:100%;height:100%;border:0}html[data-fullscreen] .dsh-synapse-overlay{top:0}html[data-fullscreen] .dsh-synapse-switch{top:12px}'
       document.head.append(style)
       const host = document.createElement('div')
       host.className = 'dsh-synapse-host'
@@ -63,6 +63,7 @@ window.__ModuleLoader__.load({
       const mapButton = host.querySelector('[data-view="map"]')
       const overlay = host.querySelector('.dsh-synapse-overlay')
       const frame = host.querySelector('iframe')
+      const switchBar = host.querySelector('.dsh-synapse-switch')
 
       const setView = view => {
         const showingMap = view === 'map'
@@ -79,6 +80,91 @@ window.__ModuleLoader__.load({
         setView('dialog')
       }
       const send = (type, payload) => { frame.contentWindow?.postMessage({ source: 'dsh-synapse', type, ...payload }, location.origin) }
+      // The top switch is draggable: the user can park it anywhere inside the
+      // viewport, and the spot survives reloads per browser profile. A drag
+      // beyond the threshold becomes a move and swallows its trailing click;
+      // a double click restores the composed default (centered, CSS-positioned).
+      const SWITCH_POSITION_KEY = 'dsh-synapse:switch-position'
+      const DRAG_THRESHOLD = 4
+      let drag = null
+      let suppressClick = false
+      let switchPosition = null
+      const storedPosition = () => {
+        try {
+          const raw = window.localStorage?.getItem(SWITCH_POSITION_KEY)
+          if (typeof raw !== 'string') return null
+          const parsed = JSON.parse(raw)
+          if (parsed === null || typeof parsed !== 'object') return null
+          const { left, top } = parsed
+          if (!Number.isFinite(left) || !Number.isFinite(top)) return null
+          return { left, top }
+        } catch {
+          // Unreadable or malformed storage never blocks the switch from mounting.
+          return null
+        }
+      }
+      const clampPosition = (left, top, rect) => {
+        const maxLeft = Math.max(0, (window.innerWidth ?? 0) - (rect?.width ?? 0))
+        const maxTop = Math.max(0, (window.innerHeight ?? 0) - (rect?.height ?? 0))
+        return { left: Math.min(Math.max(left, 0), maxLeft), top: Math.min(Math.max(top, 0), maxTop) }
+      }
+      const applyPosition = position => {
+        switchPosition = position
+        switchBar.style.left = `${position.left}px`
+        switchBar.style.top = `${position.top}px`
+        switchBar.style.transform = 'none'
+      }
+      const clearPosition = () => {
+        switchPosition = null
+        switchBar.style.left = ''
+        switchBar.style.top = ''
+        switchBar.style.transform = ''
+        try { window.localStorage?.removeItem(SWITCH_POSITION_KEY) } catch { /* storage may be unavailable */ }
+      }
+      const onPointerDown = event => {
+        if (event.button !== undefined && event.button !== 0) return
+        suppressClick = false
+        const rect = switchBar.getBoundingClientRect?.() ?? { left: 0, top: 0, width: 0, height: 0 }
+        drag = {
+          pointerId: event.pointerId,
+          startX: event.clientX,
+          startY: event.clientY,
+          originLeft: rect.left,
+          originTop: rect.top,
+          rect,
+          moved: false,
+        }
+        switchBar.setPointerCapture?.(event.pointerId)
+      }
+      const onPointerMove = event => {
+        if (drag === null || event.pointerId !== drag.pointerId) return
+        const dx = event.clientX - drag.startX
+        const dy = event.clientY - drag.startY
+        if (!drag.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return
+        drag.moved = true
+        switchBar.classList.add('is-dragging')
+        applyPosition(clampPosition(drag.originLeft + dx, drag.originTop + dy, drag.rect))
+      }
+      const onPointerUp = event => {
+        if (drag === null || event.pointerId !== drag.pointerId) return
+        switchBar.releasePointerCapture?.(event.pointerId)
+        switchBar.classList.remove('is-dragging')
+        if (drag.moved && switchPosition !== null) {
+          suppressClick = true
+          try { window.localStorage?.setItem(SWITCH_POSITION_KEY, JSON.stringify(switchPosition)) } catch { /* storage may be unavailable */ }
+        }
+        drag = null
+      }
+      const onPointerCancel = event => {
+        if (drag === null || event.pointerId !== drag.pointerId) return
+        switchBar.classList.remove('is-dragging')
+        drag = null
+      }
+      const onSwitchDoubleClick = () => { clearPosition() }
+      const onWindowResize = () => {
+        if (switchPosition === null) return
+        applyPosition(clampPosition(switchPosition.left, switchPosition.top, switchBar.getBoundingClientRect?.()))
+      }
       let syncQueued = false
       let knownSessionIds = new Set()
       // One live record per catalogued Session. The pre-0.1.7 Client minted a
@@ -309,14 +395,33 @@ window.__ModuleLoader__.load({
       }
       const unsubscribeSessions = ctx.sessions.list.subscribe(syncCurrentSession)
       const unsubscribeWorkspaces = ctx.workspaces.list.subscribe(syncCurrentSession)
-      dialogButton.addEventListener('click', close)
-      mapButton.addEventListener('click', open)
+      // The click that a drag gesture leaves behind must not switch the view.
+      const onDialogClick = () => { if (suppressClick) { suppressClick = false; return } close() }
+      const onMapClick = () => { if (suppressClick) { suppressClick = false; return } open() }
+      dialogButton.addEventListener('click', onDialogClick)
+      mapButton.addEventListener('click', onMapClick)
+      switchBar.addEventListener('pointerdown', onPointerDown)
+      switchBar.addEventListener('pointermove', onPointerMove)
+      switchBar.addEventListener('pointerup', onPointerUp)
+      switchBar.addEventListener('pointercancel', onPointerCancel)
+      switchBar.addEventListener('dblclick', onSwitchDoubleClick)
+      window.addEventListener('resize', onWindowResize)
       frame.addEventListener('load', onFrameLoad)
       window.addEventListener('message', onMessage)
       window.addEventListener('keydown', onKeyDown)
+      const savedPosition = storedPosition()
+      if (savedPosition !== null) {
+        applyPosition(clampPosition(savedPosition.left, savedPosition.top, switchBar.getBoundingClientRect?.()))
+      }
       ctx.effect(() => () => {
-        dialogButton.removeEventListener('click', close)
-        mapButton.removeEventListener('click', open)
+        dialogButton.removeEventListener('click', onDialogClick)
+        mapButton.removeEventListener('click', onMapClick)
+        switchBar.removeEventListener('pointerdown', onPointerDown)
+        switchBar.removeEventListener('pointermove', onPointerMove)
+        switchBar.removeEventListener('pointerup', onPointerUp)
+        switchBar.removeEventListener('pointercancel', onPointerCancel)
+        switchBar.removeEventListener('dblclick', onSwitchDoubleClick)
+        window.removeEventListener('resize', onWindowResize)
         frame.removeEventListener('load', onFrameLoad)
         window.removeEventListener('message', onMessage)
         window.removeEventListener('keydown', onKeyDown)
