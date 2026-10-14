@@ -267,13 +267,19 @@ async function loadBridge(options = {}) {
 
   class HTMLElement {}
   let anchorScrolled = false
-  const documentStub = {
+  const documentStub = options.document ?? {
     head: element('head'),
     body: element('body'),
     createElement: tagName => element(tagName),
     querySelector: selector => options.anchorKey !== undefined && selector.includes(options.anchorKey)
       ? Object.assign(new HTMLElement(), { scrollIntoView: () => { anchorScrolled = true } })
       : null,
+    // Models live-DOM lookup: a removed host or style leaves the tree
+    // together with everything it contains.
+    querySelectorAll: selector => [...documentStub.head.children, ...documentStub.body.children]
+      .filter(child => !child.removed)
+      .flatMap(child => [child, ...descendants(child)])
+      .filter(node => matches(node, selector)),
   }
   documentStub.body.hasAttribute = () => false
 
@@ -345,6 +351,7 @@ async function loadBridge(options = {}) {
     resize: () => { windowListeners.get('resize')?.() },
     setViewport: (width, height) => { windowStub.innerWidth = width; windowStub.innerHeight = height },
     setNow: value => { nowValue = value },
+    document: documentStub,
     anchorScrolled: () => anchorScrolled,
     chatChanged: () => { for (const listener of [...chatListeners]) listener() },
     listChanged: () => { for (const listener of [...listListeners]) listener() },
@@ -676,6 +683,40 @@ test('ignores the double click the drag tail pairs with a quick follow-up click'
 
   assert.equal(bar.style.left, '')
   assert.equal(bridge.storage.has('dsh-synapse:switch-position'), false)
+})
+
+test('persists the position on every drag step, not only on release', async () => {
+  const bridge = await loadBridge()
+  const bar = bridge.switchBar()
+  bar.rect = { left: 500, top: 40, width: 180, height: 34 }
+
+  bar.dispatch('pointerdown', { pointerId: 1, button: 0, clientX: 600, clientY: 57 })
+  bar.dispatch('pointermove', { pointerId: 1, clientX: 680, clientY: 97 })
+
+  assert.equal(bridge.storage.get('dsh-synapse:switch-position'), '{"left":580,"top":80}')
+})
+
+test('re-asserts the remembered position whenever the view switches', async () => {
+  const bridge = await loadBridge({ storedValue: JSON.stringify({ left: 100, top: 50 }) })
+  const bar = bridge.switchBar()
+  bar.style.left = ''
+  bar.style.top = ''
+  bar.style.transform = ''
+
+  bridge.shell().querySelector('[data-view="map"]').dispatch('click')
+
+  assert.equal(bar.style.left, '100px')
+  assert.equal(bar.style.top, '50px')
+  assert.equal(bar.style.transform, 'none')
+})
+
+test('replaces a stale injection instead of stacking a second switch', async () => {
+  const first = await loadBridge()
+  const second = await loadBridge({ document: first.document })
+
+  assert.equal(second.document.body.children.filter(node => !node.removed).length, 1)
+  assert.equal(second.document.querySelectorAll('.dsh-synapse-switch').length, 1)
+  assert.equal(second.document.head.children.filter(node => !node.removed).length, 1)
 })
 
 test('keeps a sub-threshold press a click that still switches the view', async () => {

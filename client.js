@@ -34,6 +34,11 @@ window.__ModuleLoader__.load({
 
     module.exports.inject = ['sessions', 'workspaces', 'uiWorkspace', 'uiConversation']
     module.exports.apply = ctx => {
+      // A re-mount of this module (hot reload, restored page) must not leave
+      // the previous injection behind: a stale host would keep painting an old
+      // switch that answers no pointer events.
+      for (const stale of document.querySelectorAll('.dsh-synapse-host')) stale.remove()
+      for (const stale of document.querySelectorAll('.dsh-synapse-style')) stale.remove()
       const prompt = async (sessionId, text) => {
         // 0.1.7 owns Session lifetime explicitly: `scope()` only borrows an
         // already-retained generation, so sending needs a reference of our own.
@@ -53,7 +58,8 @@ window.__ModuleLoader__.load({
         }
       }
       const style = document.createElement('style')
-      style.textContent = '.dsh-synapse-switch{position:fixed;z-index:80;top:calc(var(--dsh-frame-chrome-top,var(--dsh-frame-top-clearance,0px)) + 12px);left:50%;display:flex;gap:2px;transform:translateX(-50%);border:1px solid #d1d5db;border-radius:999px;background:rgba(255,255,255,.96);padding:3px;backdrop-filter:blur(10px);cursor:grab;user-select:none;touch-action:none}.dsh-synapse-switch button{height:28px;border:0;border-radius:999px;background:transparent;padding:0 11px;color:#6b7280;font:600 12px Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap}.dsh-synapse-switch button:hover{background:#f3f4f6;color:#111827}.dsh-synapse-switch button.active{background:#111827;color:#fff}.dsh-synapse-switch button:focus-visible{outline:2px solid #111827;outline-offset:2px}.dsh-synapse-switch.is-dragging{cursor:grabbing}.dsh-synapse-switch.is-dragging button{cursor:grabbing}.dsh-synapse-overlay{position:fixed;z-index:100;inset:var(--dsh-frame-chrome-top,var(--dsh-frame-top-clearance,0px)) 0 0 0;background:#f5f7fa}.dsh-synapse-overlay.is-opening{visibility:hidden}.dsh-synapse-overlay[hidden]{display:none}.dsh-synapse-overlay iframe{display:block;width:100%;height:100%;border:0}html[data-fullscreen] .dsh-synapse-overlay{top:0}html[data-fullscreen] .dsh-synapse-switch{top:12px}'
+      style.className = 'dsh-synapse-style'
+      style.textContent = '.dsh-synapse-switch{position:fixed;z-index:120;top:calc(var(--dsh-frame-chrome-top,var(--dsh-frame-top-clearance,0px)) + 12px);left:50%;display:flex;gap:2px;transform:translateX(-50%);border:1px solid #d1d5db;border-radius:999px;background:rgba(255,255,255,.96);padding:3px;backdrop-filter:blur(10px);cursor:grab;user-select:none;touch-action:none}.dsh-synapse-switch button{height:28px;border:0;border-radius:999px;background:transparent;padding:0 11px;color:#6b7280;font:600 12px Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap}.dsh-synapse-switch button:hover{background:#f3f4f6;color:#111827}.dsh-synapse-switch button.active{background:#111827;color:#fff}.dsh-synapse-switch button:focus-visible{outline:2px solid #111827;outline-offset:2px}.dsh-synapse-switch.is-dragging{cursor:grabbing}.dsh-synapse-switch.is-dragging button{cursor:grabbing}.dsh-synapse-overlay{position:fixed;z-index:100;inset:var(--dsh-frame-chrome-top,var(--dsh-frame-top-clearance,0px)) 0 0 0;background:#f5f7fa}.dsh-synapse-overlay.is-opening{visibility:hidden}.dsh-synapse-overlay[hidden]{display:none}.dsh-synapse-overlay iframe{display:block;width:100%;height:100%;border:0}html[data-fullscreen] .dsh-synapse-overlay{top:0}html[data-fullscreen] .dsh-synapse-switch{top:12px}'
       document.head.append(style)
       const host = document.createElement('div')
       host.className = 'dsh-synapse-host'
@@ -78,6 +84,7 @@ window.__ModuleLoader__.load({
         overlay.classList.remove('is-opening')
         overlay.hidden = true
         setView('dialog')
+        reapplyPosition()
       }
       const send = (type, payload) => { frame.contentWindow?.postMessage({ source: 'dsh-synapse', type, ...payload }, location.origin) }
       // The top switch is draggable: the user can park it anywhere inside the
@@ -118,6 +125,14 @@ window.__ModuleLoader__.load({
         switchBar.style.left = `${position.left}px`
         switchBar.style.top = `${position.top}px`
         switchBar.style.transform = 'none'
+        // Persist on every change: a remount anywhere (map open, page
+        // restore, hot reload) then restores the newest spot, never an older
+        // stored one.
+        try { window.localStorage?.setItem(SWITCH_POSITION_KEY, JSON.stringify(position)) } catch { /* storage may be unavailable */ }
+      }
+      const reapplyPosition = () => {
+        if (switchPosition === null) return
+        applyPosition(clampPosition(switchPosition.left, switchPosition.top, switchBar.getBoundingClientRect?.()))
       }
       const clearPosition = () => {
         switchPosition = null
@@ -165,10 +180,7 @@ window.__ModuleLoader__.load({
         switchBar.classList.remove('is-dragging')
         if (drag.moved) {
           lastDragEndAt = Date.now()
-          if (switchPosition !== null) {
-            suppressClick = true
-            try { window.localStorage?.setItem(SWITCH_POSITION_KEY, JSON.stringify(switchPosition)) } catch { /* storage may be unavailable */ }
-          }
+          if (switchPosition !== null) suppressClick = true
         }
         drag = null
       }
@@ -189,10 +201,7 @@ window.__ModuleLoader__.load({
         if (Date.now() - lastDragEndAt < DBLCLICK_AFTER_DRAG_MILLISECONDS) return
         clearPosition()
       }
-      const onWindowResize = () => {
-        if (switchPosition === null) return
-        applyPosition(clampPosition(switchPosition.left, switchPosition.top, switchBar.getBoundingClientRect?.()))
-      }
+      const onWindowResize = () => { reapplyPosition() }
       let syncQueued = false
       let knownSessionIds = new Set()
       // One live record per catalogued Session. The pre-0.1.7 Client minted a
@@ -328,6 +337,7 @@ window.__ModuleLoader__.load({
           syncCurrentSession()
         })
         mapOpenFallback = window.setTimeout(showMapOverlay, 300)
+        reapplyPosition()
       }
       const onFrameLoad = () => {
         syncCurrentSession()
