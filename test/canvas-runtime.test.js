@@ -326,3 +326,13 @@ test('prunes persisted collapsed state when a conversation is archived', async (
   assert.match(archive, /key\.startsWith\(`\$\{id\}:`\)/)
   assert.match(archive, /persistCollapsedCards\(\)/)
 })
+
+test('omits the map page view switch when embedded in the DSH overlay', async () => {
+  const source = await readFile(new URL('../app.js', import.meta.url), 'utf8')
+
+  // Standalone keeps its own switch; embedded (inside the DSH overlay) the
+  // draggable switch injected by the client half is the single control, so the
+  // page omits its own to avoid two identical bars.
+  assert.match(source, /const viewSwitch = window\.parent === window/)
+  assert.match(source, /<header class="topbar">\$\{viewSwitch\}\$\{canvasControls\}<\/header>/)
+})
