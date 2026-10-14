@@ -38,8 +38,8 @@ function element(tagName) {
     // per element before dispatching pointer events.
     rect: { left: 0, top: 0, width: 0, height: 0 },
     getBoundingClientRect() { return node.rect },
-    setPointerCapture() {},
-    releasePointerCapture() {},
+    setPointerCapture() { node.captureCalls = (node.captureCalls ?? 0) + 1 },
+    releasePointerCapture() { node.releaseCalls = (node.releaseCalls ?? 0) + 1 },
     dataset: {},
     className: '',
     classList: {
@@ -616,6 +616,25 @@ test('moves the switch beyond the drag threshold and remembers the spot', async 
   bar.dispatch('pointerup', { pointerId: 1 })
 
   assert.equal(bridge.storage.get('dsh-synapse:switch-position'), '{"left":580,"top":80}')
+})
+
+test('captures the pointer only once the press becomes a drag', async () => {
+  const bridge = await loadBridge()
+  const bar = bridge.switchBar()
+  bar.rect = { left: 500, top: 40, width: 180, height: 34 }
+
+  // A press that never leaves the threshold must not capture, because a
+  // captured pointer makes the browser deliver the trailing click to the bar
+  // instead of the button.
+  bar.dispatch('pointerdown', { pointerId: 1, button: 0, clientX: 600, clientY: 57 })
+  bar.dispatch('pointermove', { pointerId: 1, clientX: 602, clientY: 57 })
+  assert.equal(bar.captureCalls, undefined)
+
+  bar.dispatch('pointermove', { pointerId: 1, clientX: 680, clientY: 57 })
+  assert.equal(bar.captureCalls, 1)
+
+  bar.dispatch('pointerup', { pointerId: 1 })
+  assert.equal(bar.releaseCalls, 1)
 })
 
 test('keeps a sub-threshold press a click that still switches the view', async () => {

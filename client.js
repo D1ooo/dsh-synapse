@@ -133,21 +133,30 @@ window.__ModuleLoader__.load({
           originTop: rect.top,
           rect,
           moved: false,
+          captured: false,
         }
-        switchBar.setPointerCapture?.(event.pointerId)
       }
       const onPointerMove = event => {
         if (drag === null || event.pointerId !== drag.pointerId) return
         const dx = event.clientX - drag.startX
         const dy = event.clientY - drag.startY
-        if (!drag.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) return
-        drag.moved = true
-        switchBar.classList.add('is-dragging')
+        if (!drag.moved) {
+          if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return
+          drag.moved = true
+          // Capture only once the press becomes a drag: capturing on
+          // pointerdown makes the browser deliver the click to this bar
+          // instead of the button under the pointer, so the switches stop
+          // answering plain clicks.
+          try { switchBar.setPointerCapture?.(event.pointerId); drag.captured = true } catch { /* the pointer may already be gone */ }
+          switchBar.classList.add('is-dragging')
+        }
         applyPosition(clampPosition(drag.originLeft + dx, drag.originTop + dy, drag.rect))
       }
       const onPointerUp = event => {
         if (drag === null || event.pointerId !== drag.pointerId) return
-        switchBar.releasePointerCapture?.(event.pointerId)
+        if (drag.captured) {
+          try { switchBar.releasePointerCapture?.(event.pointerId) } catch { /* capture may already be gone */ }
+        }
         switchBar.classList.remove('is-dragging')
         if (drag.moved && switchPosition !== null) {
           suppressClick = true
@@ -157,6 +166,9 @@ window.__ModuleLoader__.load({
       }
       const onPointerCancel = event => {
         if (drag === null || event.pointerId !== drag.pointerId) return
+        if (drag.captured) {
+          try { switchBar.releasePointerCapture?.(event.pointerId) } catch { /* capture may already be gone */ }
+        }
         switchBar.classList.remove('is-dragging')
         drag = null
       }
