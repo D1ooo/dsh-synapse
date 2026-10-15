@@ -5,11 +5,13 @@ import test from 'node:test'
 
 async function loadRenderer() {
   const source = await readFile(new URL('../app.js', import.meta.url), 'utf8')
-  const start = source.indexOf('const escapeHtml')
-  const end = source.indexOf('function canvasConnectors')
-  const context = { globalThis: {} }
+  // The renderer reaches the locale helpers, so evaluate the stored-fragment
+  // helpers first, then the render region; browser globals are stubbed.
+  const helpers = source.slice(source.indexOf('const SERVER_TEXT'), source.indexOf('// i18n-copy-end'))
+  const renderRegion = source.slice(source.indexOf('const escapeHtml'), source.indexOf('function canvasConnectors'))
+  const context = { globalThis: {}, document: { documentElement: {} } }
   vm.createContext(context)
-  vm.runInContext(`${source.slice(start, end)};globalThis.renderMarkdown = renderMarkdown`, context)
+  vm.runInContext(`${helpers}\n${renderRegion};globalThis.renderMarkdown = renderMarkdown`, context)
   return context.globalThis.renderMarkdown
 }
 

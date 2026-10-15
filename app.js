@@ -7,6 +7,242 @@ const QUICK_PHRASES_KEY = 'dsh-synapse:quick-phrases:v1'
 const DEFAULT_QUICK_PHRASES = ['展开说明', '举例', '通俗易懂', '对比解释']
 const MAX_QUICK_PHRASES = 12
 const MAX_QUICK_PHRASE_LENGTH = 16
+
+// i18n-copy-start — every user-visible string and the stored-fragment map live
+// in this block; the locale scanner test exempts exactly this range.
+const COPY = {
+  zh: {
+    requestFailed: '请求失败',
+    notEmbedded: '请从 DSH 页面打开 Synapse 后再操作会话',
+    timeout: 'DSH 未在规定时间内响应',
+    confirmArchive: '归档画布中的「{title}」及其分支？DSH 原会话会保留，可在 DSH 内继续查看。',
+    noLinkedSession: '该节点没有关联的 DSH 会话',
+    sessionReplying: '该会话正在回复，请稍后再发送',
+    sourceMissing: '来源会话不存在',
+    awaitingQuestion: '等待用户提问',
+    sourceDshSession: 'DSH 会话',
+    sourceDshBranch: 'DSH 分支',
+    sourceFollowUp: '追问',
+    'action.addFollowUp': '添加追问',
+    'action.expandDescendants': '展开后续对话',
+    'action.collapseDescendants': '折叠后续对话',
+    'action.branchInNewChat': '在新对话中分支',
+    'action.dragCardAria': '拖动 {question}',
+    'action.dragCard': '拖动卡片',
+    'action.viewFullSessionQuestion': '查看完整会话：{question}',
+    'label.turn': '第 {turn} 轮',
+    'label.failed': '失败',
+    'label.tools': '工具 {count}',
+    'label.awaitingAssistant': '等待助手回复',
+    'label.replying': '正在回复',
+    'label.turnFailed': '本轮失败：{text}',
+    'label.details': '详情',
+    'action.viewFullSession': '查看完整会话',
+    'action.openInDsh': '在 DSH 中打开',
+    'action.archiveSession': '归档此会话',
+    'action.archive': '归档',
+    'action.cancel': '取消',
+    'action.send': '发送',
+    'aria.quickPhrase': '快捷词 {index}',
+    'aria.removePhrase': '删除 {phrase}',
+    'action.delete': '删除',
+    'aria.editQuickPhrases': '编辑快捷词',
+    'placeholder.addPhrase': '添加快捷词',
+    'action.addQuickPhrase': '添加快捷词',
+    done: '完成',
+    'aria.commonPhrases': '常用补充词',
+    'action.manageQuickPhrases': '管理快捷词',
+    'label.newSession': '新会话',
+    'placeholder.firstMessage': '输入第一条消息',
+    'label.newFollowUp': '新的追问',
+    'label.newBranch': '新的分支',
+    'placeholder.followUp': '输入追问',
+    'placeholder.branchQuestion': '输入这个分支的新问题',
+    'action.followSelectionAria': '基于所选内容创建追问',
+    'action.followSelection': '基于所选内容追问',
+    'action.followUp': '追问',
+    'empty.noConversations': '当前工作目录还没有 DSH 对话。',
+    'empty.startHint': '点击新会话，在画布中输入第一条消息。',
+    'action.createSession': '新建会话',
+    'label.toolCallRecord': '工具调用记录',
+    'label.you': '你',
+    'label.error': '错误',
+    'label.record': '记录',
+    'action.branchFromAnswer': '从此回答创建分支',
+    'label.branch': '分支',
+    'action.collapseProcess': '收起过程记录',
+    'action.expandProcess': '展开过程记录',
+    'action.collapse': '收起',
+    'action.expand': '展开',
+    'label.processRecords': '过程记录',
+    'label.toolResult': '工具结果',
+    'label.turnIncomplete': '本轮未完成',
+    'action.continueFollowUp': '继续追问',
+    'action.createBranch': '创建分支',
+    'aria.cardDetails': '卡片详情',
+    'aria.closeCardDetails': '关闭卡片详情',
+    'action.close': '关闭',
+    'label.session': '会话',
+    'action.openInNativeChat': '在原生对话中打开此会话',
+    'action.branchFromLatest': '基于最新回答创建分支',
+    'action.backToCanvas': '返回画布',
+    'empty.awaitingFirstMessage': '等待这条会话的第一条消息。',
+    'placeholder.continueSession': '继续当前会话…',
+    'label.waitingReply': '等待回复',
+    'action.arrange': '整理节点',
+    arrangeShort: '整理',
+    'action.focusCurrent': '定位到当前会话',
+    focusShort: '定位',
+    'action.zoomOut': '缩小',
+    'action.zoomIn': '放大',
+    viewSwitch: '视图切换',
+    dialog: '对话',
+    map: '会话地图',
+    'aria.mapTabs': '会话地图视图',
+    tabMap: '地图',
+    'aria.expandSidebar': '展开侧边栏',
+    'aria.collapseSidebar': '收起侧边栏',
+    'label.workspace': '工作区',
+    'aria.selectWorkspace': '选择工作区',
+    'label.sessions': '会话',
+    'empty.noSessions': '暂未同步会话',
+    'error.finishDraft': '请先完成或取消正在编辑的追问或分支',
+    'error.sessionInBranch': '当前会话位于这个后续分支中，请先切换会话',
+    'error.waitForFinalAnswer': '请等待这张卡片的最终回答后再创建分支',
+    'error.phraseExists': '这个快捷词已经存在',
+    'error.followUpTooLong': '追问内容不能超过 {limit} 个字符',
+    'error.phraseLimit': '最多保留 {limit} 个快捷词',
+    'label.awaitingResult': '等待结果',
+  },
+  en: {
+    requestFailed: 'Request failed',
+    notEmbedded: 'Open Synapse from the DSH page before operating on sessions',
+    timeout: 'DSH did not respond in time',
+    confirmArchive: 'Archive “{title}” and its branches from the canvas? The original DSH session is kept and can still be viewed in DSH.',
+    noLinkedSession: 'This node has no linked DSH session',
+    sessionReplying: 'This session is replying; try again later',
+    sourceMissing: 'The source session does not exist',
+    awaitingQuestion: 'Waiting for a question',
+    sourceDshSession: 'DSH session',
+    sourceDshBranch: 'DSH branch',
+    sourceFollowUp: 'Follow-up',
+    'action.addFollowUp': 'Add follow-up',
+    'action.expandDescendants': 'Expand descendants',
+    'action.collapseDescendants': 'Collapse descendants',
+    'action.branchInNewChat': 'Branch into a new chat',
+    'action.dragCardAria': 'Drag {question}',
+    'action.dragCard': 'Drag card',
+    'action.viewFullSessionQuestion': 'View the full session: {question}',
+    'label.turn': 'Turn {turn}',
+    'label.failed': 'Failed',
+    'label.tools': 'Tools {count}',
+    'label.awaitingAssistant': 'Waiting for the assistant',
+    'label.replying': 'Replying',
+    'label.turnFailed': 'This turn failed: {text}',
+    'label.details': 'Details',
+    'action.viewFullSession': 'View the full session',
+    'action.openInDsh': 'Open in DSH',
+    'action.archiveSession': 'Archive this session',
+    'action.archive': 'Archive',
+    'action.cancel': 'Cancel',
+    'action.send': 'Send',
+    'aria.quickPhrase': 'Quick phrase {index}',
+    'aria.removePhrase': 'Remove {phrase}',
+    'action.delete': 'Delete',
+    'aria.editQuickPhrases': 'Edit quick phrases',
+    'placeholder.addPhrase': 'Add a quick phrase',
+    'action.addQuickPhrase': 'Add quick phrase',
+    done: 'Done',
+    'aria.commonPhrases': 'Common phrases',
+    'action.manageQuickPhrases': 'Manage quick phrases',
+    'label.newSession': 'New session',
+    'placeholder.firstMessage': 'Type the first message',
+    'label.newFollowUp': 'New follow-up',
+    'label.newBranch': 'New branch',
+    'placeholder.followUp': 'Type the follow-up',
+    'placeholder.branchQuestion': 'Type the new question for this branch',
+    'action.followSelectionAria': 'Create a follow-up from the selection',
+    'action.followSelection': 'Follow up on the selection',
+    'action.followUp': 'Follow up',
+    'empty.noConversations': 'This working directory has no DSH conversations yet.',
+    'empty.startHint': 'Start a new session and type the first message on the canvas.',
+    'action.createSession': 'New session',
+    'label.toolCallRecord': 'Tool call record',
+    'label.you': 'You',
+    'label.error': 'Error',
+    'label.record': 'Record',
+    'action.branchFromAnswer': 'Branch from this answer',
+    'label.branch': 'Branch',
+    'action.collapseProcess': 'Collapse process records',
+    'action.expandProcess': 'Expand process records',
+    'action.collapse': 'Collapse',
+    'action.expand': 'Expand',
+    'label.processRecords': 'Process records',
+    'label.toolResult': 'Tool result',
+    'label.turnIncomplete': 'This turn is incomplete',
+    'action.continueFollowUp': 'Continue follow-up',
+    'action.createBranch': 'Create branch',
+    'aria.cardDetails': 'Card details',
+    'aria.closeCardDetails': 'Close card details',
+    'action.close': 'Close',
+    'label.session': 'Session',
+    'action.openInNativeChat': 'Open this session in the native chat',
+    'action.branchFromLatest': 'Branch from the latest answer',
+    'action.backToCanvas': 'Back to canvas',
+    'empty.awaitingFirstMessage': "Waiting for this session's first message.",
+    'placeholder.continueSession': 'Continue this session…',
+    'label.waitingReply': 'Waiting for reply',
+    'action.arrange': 'Arrange nodes',
+    arrangeShort: 'Arrange',
+    'action.focusCurrent': 'Focus the current session',
+    focusShort: 'Focus',
+    'action.zoomOut': 'Zoom out',
+    'action.zoomIn': 'Zoom in',
+    viewSwitch: 'View switch',
+    dialog: 'Dialogue',
+    map: 'Session Map',
+    'aria.mapTabs': 'Session map views',
+    tabMap: 'Map',
+    'aria.expandSidebar': 'Expand sidebar',
+    'aria.collapseSidebar': 'Collapse sidebar',
+    'label.workspace': 'Workspace',
+    'aria.selectWorkspace': 'Select workspace',
+    'label.sessions': 'Sessions',
+    'empty.noSessions': 'No sessions synced yet',
+    'error.finishDraft': 'Finish or cancel the follow-up or branch being edited first',
+    'error.sessionInBranch': 'The current session sits in a descendant branch; switch sessions first',
+    'error.waitForFinalAnswer': "Wait for this card's final answer before creating a branch",
+    'error.phraseExists': 'This quick phrase already exists',
+    'error.followUpTooLong': 'A follow-up cannot exceed {limit} characters',
+    'error.phraseLimit': 'At most {limit} quick phrases can be kept',
+    'label.awaitingResult': 'Waiting for the result',
+  },
+}
+// Stored fragments the Host projects into durable records (workspace titles,
+// the tool-call process name, the truncated-content suffix). Rendering maps
+// them onto the active locale instead of rewriting persisted data.
+const SERVER_TEXT = {
+  lookup: {
+    'DSH 任务': { zh: 'DSH 任务', en: 'DSH tasks' },
+    '未命名工作空间': { zh: '未命名工作空间', en: 'Unnamed workspace' },
+    '未指定工作目录': { zh: '未指定工作目录', en: 'No working directory' },
+    '工具调用': { zh: '工具调用', en: 'Tool call' },
+  },
+  truncationSuffix: '（内容过长，请在详情查看全文）',
+  truncation: { zh: '（内容过长，请在详情查看全文）', en: '(Open Details to read the full text)' },
+}
+let locale = typeof navigator !== 'undefined' && typeof navigator.language === 'string' && navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en'
+document.documentElement.lang = locale
+const t = (key, params) => {
+  const template = COPY[locale]?.[key] ?? COPY.en[key] ?? key
+  if (params === undefined) return template
+  return template.replace(/\{(\w+)\}/g, (match, name) => name in params ? String(params[name]) : match)
+}
+const displayData = value => SERVER_TEXT.lookup[value]?.[locale] ?? value
+const localizeServerText = value => typeof value === 'string' && value.includes(SERVER_TEXT.truncationSuffix)
+  ? value.split(SERVER_TEXT.truncationSuffix).join(SERVER_TEXT.truncation[locale])
+  : value
+// i18n-copy-end
 function normalizeQuickPhrases(value) {
   if (!Array.isArray(value)) return []
   const phrases = []
@@ -68,7 +304,7 @@ const state = {
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]))
 const formatTime = value => new Date(value).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 const currentThread = () => state.workspace?.threads.find(thread => thread.id === state.activeId) ?? state.workspace?.threads[0] ?? null
-const threadListTitle = thread => thread.dshSessionTitle ?? thread.title ?? questionFor(thread)
+const threadListTitle = thread => displayData(thread.dshSessionTitle ?? thread.title ?? questionFor(thread))
 
 function rememberBranchAnchor(sessionId, cardId) {
   state.branchAnchors.set(sessionId, cardId)
@@ -110,7 +346,7 @@ function resetCanvasCamera() {
 async function api(path, options = {}) {
   const response = await fetch(path, { ...options, headers: { 'content-type': 'application/json', ...(options.headers ?? {}) } })
   const body = await response.json().catch(() => ({}))
-  if (!response.ok) throw new Error(body.error ?? '请求失败')
+  if (!response.ok) throw new Error(body.error ?? t('requestFailed'))
   return body
 }
 
@@ -119,13 +355,13 @@ function post(type, payload = {}) {
 }
 
 function dshRpc(type, payload = {}) {
-  if (window.parent === window) return Promise.reject(new Error('请从 DSH 页面打开 Synapse 后再操作会话'))
+  if (window.parent === window) return Promise.reject(new Error(t('notEmbedded')))
   const requestId = crypto.randomUUID()
   post(type, { requestId, ...payload })
   return new Promise((resolve, reject) => {
     const timer = window.setTimeout(() => {
       state.pendingRpc.delete(requestId)
-      reject(new Error('DSH 未在规定时间内响应'))
+      reject(new Error(t('timeout')))
     }, 20_000)
     state.pendingRpc.set(requestId, { resolve, reject, timer })
   })
@@ -178,8 +414,8 @@ function currentDshThread(threads = state.workspace?.threads ?? []) {
 }
 
 function workspaceChoices() {
-  if (state.dshWorkspaces.length > 0) return state.dshWorkspaces.map(workspace => ({ ...workspace, source: 'dsh' }))
-  return state.summaries.map(workspace => ({ id: workspace.id, title: workspace.title, path: workspace.cwd, sessionIds: [], source: 'projection' }))
+  if (state.dshWorkspaces.length > 0) return state.dshWorkspaces.map(workspace => ({ ...workspace, title: displayData(workspace.title), source: 'dsh' }))
+  return state.summaries.map(workspace => ({ id: workspace.id, title: displayData(workspace.title), path: workspace.cwd, sessionIds: [], source: 'projection' }))
 }
 
 async function threadsForDshWorkspace(workspace) {
@@ -264,7 +500,7 @@ function openNewSession() {
 }
 
 async function archiveThread(thread) {
-  if (!window.confirm(`归档画布中的「${thread.title}」及其分支？DSH 原会话会保留，可在 DSH 内继续查看。`)) return
+  if (!window.confirm(t('confirmArchive', { title: thread.title }))) return
   await api(`/synapse/api/threads/${thread.id}`, { method: 'DELETE' })
   state.historyBySession.delete(thread.dshSessionId)
   state.detailScrollByThread.delete(thread.id)
@@ -310,7 +546,7 @@ function focusDraftInput() {
 }
 
 function openContinue(parent, anchorId = undefined, text = '') {
-  if (parent.dshSessionId === null) return setError('该节点没有关联的 DSH 会话')
+  if (parent.dshSessionId === null) return setError(t('noLinkedSession'))
   state.activeId = parent.id
   state.quickPhraseEditorOpen = false
   state.draft = { kind: 'continue', parentId: parent.id, anchorId, text, sending: false }
@@ -319,7 +555,7 @@ function openContinue(parent, anchorId = undefined, text = '') {
 }
 
 function openBranch(parent, atSeq = undefined, anchorId = undefined) {
-  if (parent.dshSessionId === null) return setError('该节点没有关联的 DSH 会话')
+  if (parent.dshSessionId === null) return setError(t('noLinkedSession'))
   state.activeId = parent.id
   state.quickPhraseEditorOpen = false
   state.draft = { kind: 'branch', parentId: parent.id, atSeq, anchorId, text: '', sending: false }
@@ -328,8 +564,8 @@ function openBranch(parent, atSeq = undefined, anchorId = undefined) {
 }
 
 async function sendMessage(thread, text) {
-  if (thread.dshSessionId === null) throw new Error('该节点没有关联的 DSH 会话')
-  if (state.pendingReplies.has(thread.dshSessionId)) throw new Error('该会话正在回复，请稍后再发送')
+  if (thread.dshSessionId === null) throw new Error(t('noLinkedSession'))
+  if (state.pendingReplies.has(thread.dshSessionId)) throw new Error(t('sessionReplying'))
   state.pendingReplies.set(thread.dshSessionId, { text, at: Date.now() })
   state.error = ''
   render()
@@ -363,7 +599,7 @@ async function submitDraft() {
       return
     }
     const parent = state.workspace?.threads.find(thread => thread.id === draft.parentId)
-    if (parent === undefined) throw new Error('来源会话不存在')
+    if (parent === undefined) throw new Error(t('sourceMissing'))
     if (draft.kind === 'continue') {
       state.draft = null
       await sendMessage(parent, text)
@@ -426,7 +662,7 @@ function messagesFor(thread) {
 }
 
 function latestMessage(thread, kind) { return [...messagesFor(thread)].reverse().find(message => message.kind === kind) }
-function questionFor(thread) { return latestMessage(thread, 'user')?.text ?? thread.dshSessionTitle ?? '等待用户提问' }
+function questionFor(thread) { return latestMessage(thread, 'user')?.text ?? thread.dshSessionTitle ?? t('awaitingQuestion') }
 function answerFor(thread) { return latestMessage(thread, 'assistant') ?? null }
 
 function inlineMarkdown(text) {
@@ -501,7 +737,7 @@ function markdownBlock(text) {
 const markdownCache = new Map()
 const MARKDOWN_CACHE_LIMIT = 5000
 function renderMarkdown(text) {
-  const key = String(text)
+  const key = localizeServerText(String(text))
   const cached = markdownCache.get(key)
   if (cached !== undefined) return cached
   const parts = key.split(/```/)
@@ -879,41 +1115,41 @@ function canvasConnectors(cards) {
 
 function conversationCard(card, graph) {
   const selected = card.id === state.selectedCardId ? 'selected' : ''
-  const source = card.parentId === null ? 'DSH 会话' : card.turnIndex === 0 ? 'DSH 分支' : '追问'
+  const source = card.parentId === null ? t('sourceDshSession') : card.turnIndex === 0 ? t('sourceDshBranch') : t('sourceFollowUp')
   const continueButton = card.canContinue === true
-    ? `<button class="graph-continue-button" data-action="open-continue" data-thread="${card.dshThreadId}" data-card="${escapeHtml(card.id)}" aria-label="添加追问" title="添加追问"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 3.5v9M3.5 8h9"/></svg></button>`
+    ? `<button class="graph-continue-button" data-action="open-continue" data-thread="${card.dshThreadId}" data-card="${escapeHtml(card.id)}" aria-label="${t('action.addFollowUp')}" title="${t('action.addFollowUp')}"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="M8 3.5v9M3.5 8h9"/></svg></button>`
     : ''
   const childCount = graph.childCounts.get(card.id) ?? 0
   const collapsed = state.collapsedCardIds.has(card.id)
-  const foldLabel = collapsed ? '展开后续对话' : '折叠后续对话'
+  const foldLabel = collapsed ? t('action.expandDescendants') : t('action.collapseDescendants')
   const foldButton = childCount === 0 || card.canContinue === true ? '' : `<button class="graph-fold-button${collapsed ? ' collapsed' : ''}" data-action="toggle-card-children" data-card="${escapeHtml(card.id)}" aria-expanded="${collapsed ? 'false' : 'true'}" aria-label="${foldLabel}" title="${foldLabel}"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="M3.5 8h9"/>${collapsed ? '<path d="M8 3.5v9"/>' : ''}</svg></button>`
-  const branchButton = childCount === 0 || card.canContinue === true || !Number.isInteger(card.answer?.sourceSeq) ? '' : `<button class="graph-branch-button" data-action="open-branch" data-thread="${card.dshThreadId}" data-card="${escapeHtml(card.id)}" data-seq="${card.answer.sourceSeq}" aria-label="在新对话中分支" title="在新对话中分支"><svg aria-hidden="true" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M13.0762 1.37207C14.0846 1.37228 14.9021 2.19077 14.9023 3.19922C14.9022 4.20772 14.0847 5.02518 13.0762 5.02539C12.2967 5.02539 11.6325 4.53691 11.3701 3.84961H4.35547C4.79397 4.26458 5.15861 4.7644 5.41699 5.33496L7.10645 9.06738C7.88526 10.7875 9.55104 11.9228 11.4189 12.0371C11.7085 11.4109 12.3411 10.9756 13.0762 10.9756C14.0843 10.9759 14.9023 11.7936 14.9023 12.8018C14.9023 13.81 14.0843 14.6277 13.0762 14.6279C12.2534 14.6279 11.5574 14.0832 11.3291 13.335C8.9868 13.1879 6.89981 11.7612 5.92285 9.60352L4.23242 5.87109C3.67503 4.64033 2.44878 3.84961 1.09766 3.84961V2.54883C1.10665 2.54883 1.11601 2.54975 1.125 2.5498L11.3701 2.54883C11.6326 1.86151 12.2969 1.37207 13.0762 1.37207ZM13.0762 12.2764C12.7858 12.2764 12.5508 12.5114 12.5508 12.8018C12.5508 13.0921 12.7858 13.3281 13.0762 13.3281C13.3664 13.3279 13.6025 13.092 13.6025 12.8018C13.6025 12.5115 13.3664 12.2766 13.0762 12.2764ZM13.0762 2.67285C12.7855 2.67285 12.55 2.90861 12.5498 3.19922C12.5499 3.48987 12.7855 3.72559 13.0762 3.72559C13.3667 3.72538 13.6024 3.48975 13.6025 3.19922C13.6023 2.90874 13.3666 2.67306 13.0762 2.67285Z" fill="currentColor"/></svg></button>`
+  const branchButton = childCount === 0 || card.canContinue === true || !Number.isInteger(card.answer?.sourceSeq) ? '' : `<button class="graph-branch-button" data-action="open-branch" data-thread="${card.dshThreadId}" data-card="${escapeHtml(card.id)}" data-seq="${card.answer.sourceSeq}" aria-label="${t('action.branchInNewChat')}" title="${t('action.branchInNewChat')}"><svg aria-hidden="true" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M13.0762 1.37207C14.0846 1.37228 14.9021 2.19077 14.9023 3.19922C14.9022 4.20772 14.0847 5.02518 13.0762 5.02539C12.2967 5.02539 11.6325 4.53691 11.3701 3.84961H4.35547C4.79397 4.26458 5.15861 4.7644 5.41699 5.33496L7.10645 9.06738C7.88526 10.7875 9.55104 11.9228 11.4189 12.0371C11.7085 11.4109 12.3411 10.9756 13.0762 10.9756C14.0843 10.9759 14.9023 11.7936 14.9023 12.8018C14.9023 13.81 14.0843 14.6277 13.0762 14.6279C12.2534 14.6279 11.5574 14.0832 11.3291 13.335C8.9868 13.1879 6.89981 11.7612 5.92285 9.60352L4.23242 5.87109C3.67503 4.64033 2.44878 3.84961 1.09766 3.84961V2.54883C1.10665 2.54883 1.11601 2.54975 1.125 2.5498L11.3701 2.54883C11.6326 1.86151 12.2969 1.37207 13.0762 1.37207ZM13.0762 12.2764C12.7858 12.2764 12.5508 12.5114 12.5508 12.8018C12.5508 13.0921 12.7858 13.3281 13.0762 13.3281C13.3664 13.3279 13.6025 13.092 13.6025 12.8018C13.6025 12.5115 13.3664 12.2766 13.0762 12.2764ZM13.0762 2.67285C12.7855 2.67285 12.55 2.90861 12.5498 3.19922C12.5499 3.48987 12.7855 3.72559 13.0762 3.72559C13.3667 3.72538 13.6024 3.48975 13.6025 3.19922C13.6023 2.90874 13.3666 2.67306 13.0762 2.67285Z" fill="currentColor"/></svg></button>`
   return `<article class="thread-card ${selected}" data-card-id="${escapeHtml(card.id)}" data-position-key="${escapeHtml(card.positionKey)}" data-thread="${card.dshThreadId}" style="left:${card.position.x}px;top:${card.position.y}px;--thread-color:#3478f6">
-    <button class="node-handle" data-drag-card="${card.id}" aria-label="拖动 ${escapeHtml(card.question)}" title="拖动卡片"></button>
+    <button class="node-handle" data-drag-card="${card.id}" aria-label="${escapeHtml(t('action.dragCardAria', { question: card.question }))}" title="${t('action.dragCard')}"></button>
     ${continueButton}${foldButton}${branchButton}
-    <div class="thread-card-head"><span class="topic-dot"></span><button class="thread-title" data-action="show-thread" data-thread="${card.dshThreadId}" data-card="${escapeHtml(card.id)}" title="查看完整会话：${escapeHtml(card.question)}">${escapeHtml(card.question)}</button></div>
-    <div class="thread-meta"><span>${source}</span><span>第 ${card.turnIndex + 1} 轮</span>${card.error === null ? '' : '<span class="card-error-status">失败</span>'}${card.processCount > 0 ? `<span class="card-process-count">工具 ${card.processCount}</span>` : ''}</div>
-    <div class="thread-answer">${card.answer === null ? (card.error === null ? '<p class="thread-answer-empty">等待助手回复</p>' : '') : card.answer.pending && card.answer.text === '' ? '<p class="thread-answer-pending">正在回复</p>' : `${renderMarkdown(card.answer.text)}${card.answer.pending ? '<p class="thread-answer-pending">正在回复</p>' : ''}`}${card.error === null ? '' : `<p class="thread-answer-error" title="${escapeHtml(card.error.text)}">本轮失败：${escapeHtml(card.error.text)}</p>`}</div>
-    <footer><button data-action="show-thread" data-thread="${card.dshThreadId}" data-card="${escapeHtml(card.id)}" title="查看完整会话" aria-label="查看完整会话"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M2 8.5 8 2.5l6 6V13.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5Z"/><path d="M6.2 14v-3.6a1.8 1.8 0 0 1 3.6 0V14" /></svg>详情</button><button data-action="open-dsh" data-thread="${card.dshThreadId}" data-seq="${Number.isInteger(card.sourceSeq) ? card.sourceSeq : ''}" title="在 DSH 中打开" aria-label="在 DSH 中打开"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5H4.5A1.5 1.5 0 0 0 3 5v6.5A1.5 1.5 0 0 0 4.5 13H11a1.5 1.5 0 0 0 1.5-1.5V9"/><path d="M9.5 3.5h3v3M12.4 3.6 7.5 8.5"/></svg>DSH</button><button data-action="archive-thread" data-thread="${card.dshThreadId}" title="归档此会话" aria-label="归档此会话"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5h11M5.5 7v5.5a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V7"/><path d="M4 5 5 2.8a.7.7 0 0 1 .6-.4h4.8a.7.7 0 0 1 .6.4L12 5M6 9.5h4"/></svg>归档</button></footer>
+    <div class="thread-card-head"><span class="topic-dot"></span><button class="thread-title" data-action="show-thread" data-thread="${card.dshThreadId}" data-card="${escapeHtml(card.id)}" title="${escapeHtml(t('action.viewFullSessionQuestion', { question: card.question }))}">${escapeHtml(card.question)}</button></div>
+    <div class="thread-meta"><span>${source}</span><span>${t('label.turn', { turn: card.turnIndex + 1 })}</span>${card.error === null ? '' : `<span class="card-error-status">${t('label.failed')}</span>`}${card.processCount > 0 ? `<span class="card-process-count">${t('label.tools', { count: card.processCount })}</span>` : ''}</div>
+    <div class="thread-answer">${card.answer === null ? (card.error === null ? `<p class="thread-answer-empty">${t('label.awaitingAssistant')}</p>` : '') : card.answer.pending && card.answer.text === '' ? `<p class="thread-answer-pending">${t('label.replying')}</p>` : `${renderMarkdown(card.answer.text)}${card.answer.pending ? `<p class="thread-answer-pending">${t('label.replying')}</p>` : ''}`}${card.error === null ? '' : `<p class="thread-answer-error" title="${escapeHtml(card.error.text)}">${escapeHtml(t('label.turnFailed', { text: card.error.text }))}</p>`}</div>
+    <footer><button data-action="show-thread" data-thread="${card.dshThreadId}" data-card="${escapeHtml(card.id)}" title="${t('action.viewFullSession')}" aria-label="${t('action.viewFullSession')}"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M2 8.5 8 2.5l6 6V13.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5Z"/><path d="M6.2 14v-3.6a1.8 1.8 0 0 1 3.6 0V14" /></svg>${t('label.details')}</button><button data-action="open-dsh" data-thread="${card.dshThreadId}" data-seq="${Number.isInteger(card.sourceSeq) ? card.sourceSeq : ''}" title="${t('action.openInDsh')}" aria-label="${t('action.openInDsh')}"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3.5H4.5A1.5 1.5 0 0 0 3 5v6.5A1.5 1.5 0 0 0 4.5 13H11a1.5 1.5 0 0 0 1.5-1.5V9"/><path d="M9.5 3.5h3v3M12.4 3.6 7.5 8.5"/></svg>DSH</button><button data-action="archive-thread" data-thread="${card.dshThreadId}" title="${t('action.archiveSession')}" aria-label="${t('action.archiveSession')}"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5h11M5.5 7v5.5a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1V7"/><path d="M4 5 5 2.8a.7.7 0 0 1 .6-.4h4.8a.7.7 0 0 1 .6.4L12 5M6 9.5h4"/></svg>${t('action.archive')}</button></footer>
   </article>`
 }
 
 function draftActions(draft) {
   const disabled = draft.sending ? 'disabled' : ''
-  return `<div class="draft-actions"><button type="button" data-action="cancel-draft" ${disabled} aria-label="取消" title="取消"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 4.5 7 7m0-7-7 7"/></svg></button><button class="primary" type="submit" ${disabled} aria-label="发送" title="发送"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 12.5v-9M4.5 7 8 3.5 11.5 7"/></svg></button></div>`
+  return `<div class="draft-actions"><button type="button" data-action="cancel-draft" ${disabled} aria-label="${t('action.cancel')}" title="${t('action.cancel')}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 4.5 7 7m0-7-7 7"/></svg></button><button class="primary" type="submit" ${disabled} aria-label="${t('action.send')}" title="${t('action.send')}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 12.5v-9M4.5 7 8 3.5 11.5 7"/></svg></button></div>`
 }
 
 function quickPhraseEditor(draft) {
   const disabled = draft.sending ? 'disabled' : ''
-  const phrases = state.quickPhrases.map((phrase, index) => `<div class="draft-quick-phrase-editor-row"><input data-quick-phrase-index="${index}" maxlength="${MAX_QUICK_PHRASE_LENGTH}" value="${escapeHtml(phrase)}" aria-label="快捷词 ${index + 1}" ${disabled}><button type="button" data-action="remove-quick-phrase" data-quick-phrase-index="${index}" aria-label="删除 ${escapeHtml(phrase)}" title="删除" ${disabled}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 4.5 7 7m0-7-7 7"/></svg></button></div>`).join('')
-  return `<section class="draft-quick-editor" aria-label="编辑快捷词"><div class="draft-quick-editor-list">${phrases}</div><div class="draft-quick-phrase-add"><input maxlength="${MAX_QUICK_PHRASE_LENGTH}" placeholder="添加快捷词" aria-label="添加快捷词" ${disabled}><button class="primary" type="button" data-action="add-quick-phrase" aria-label="添加快捷词" title="添加快捷词" ${disabled}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg></button></div><button class="draft-quick-editor-close" type="button" data-action="close-quick-phrase-editor" ${disabled}>完成</button></section>`
+  const phrases = state.quickPhrases.map((phrase, index) => `<div class="draft-quick-phrase-editor-row"><input data-quick-phrase-index="${index}" maxlength="${MAX_QUICK_PHRASE_LENGTH}" value="${escapeHtml(phrase)}" aria-label="${t('aria.quickPhrase', { index: index + 1 })}" ${disabled}><button type="button" data-action="remove-quick-phrase" data-quick-phrase-index="${index}" aria-label="${escapeHtml(t('aria.removePhrase', { phrase: phrase }))}" title="${t('action.delete')}" ${disabled}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 4.5 7 7m0-7-7 7"/></svg></button></div>`).join('')
+  return `<section class="draft-quick-editor" aria-label="${t('aria.editQuickPhrases')}"><div class="draft-quick-editor-list">${phrases}</div><div class="draft-quick-phrase-add"><input maxlength="${MAX_QUICK_PHRASE_LENGTH}" placeholder="${t('placeholder.addPhrase')}" aria-label="${t('action.addQuickPhrase')}" ${disabled}><button class="primary" type="button" data-action="add-quick-phrase" aria-label="${t('action.addQuickPhrase')}" title="${t('action.addQuickPhrase')}" ${disabled}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg></button></div><button class="draft-quick-editor-close" type="button" data-action="close-quick-phrase-editor" ${disabled}>${t('done')}</button></section>`
 }
 
 function draftQuickPhrases(draft) {
   const disabled = draft.sending ? 'disabled' : ''
   if (state.quickPhraseEditorOpen) return quickPhraseEditor(draft)
   const phrases = state.quickPhrases.map(phrase => `<button class="draft-quick-phrase" type="button" data-action="insert-quick-phrase" data-quick-phrase="${escapeHtml(phrase)}" ${disabled}>${escapeHtml(phrase)}</button>`).join('')
-  return `<div class="draft-quick-phrases" aria-label="常用补充词">${phrases}<button class="draft-quick-phrase-add-button" type="button" data-action="open-quick-phrase-editor" aria-label="管理快捷词" title="管理快捷词" ${disabled}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg></button></div>`
+  return `<div class="draft-quick-phrases" aria-label="${t('aria.commonPhrases')}">${phrases}<button class="draft-quick-phrase-add-button" type="button" data-action="open-quick-phrase-editor" aria-label="${t('action.manageQuickPhrases')}" title="${t('action.manageQuickPhrases')}" ${disabled}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg></button></div>`
 }
 
 function insertQuickPhrase(phrase) {
@@ -925,7 +1161,7 @@ function insertQuickPhrase(phrase) {
   const suffix = input.value.slice(end)
   const separator = prefix !== '' && !prefix.endsWith('\n') ? '\n' : ''
   const text = `${prefix}${separator}${phrase}${suffix}`
-  if (text.length > input.maxLength) return setError('追问内容不能超过 4000 个字符')
+  if (text.length > input.maxLength) return setError(t('error.followUpTooLong', { limit: input.maxLength }))
   const caret = prefix.length + separator.length + phrase.length
   input.value = text
   state.draft.text = text
@@ -936,8 +1172,8 @@ function insertQuickPhrase(phrase) {
 function addQuickPhrase(value) {
   const phrase = value.trim().slice(0, MAX_QUICK_PHRASE_LENGTH)
   if (phrase === '') return false
-  if (state.quickPhrases.includes(phrase)) return setError('这个快捷词已经存在')
-  if (state.quickPhrases.length >= MAX_QUICK_PHRASES) return setError(`最多保留 ${MAX_QUICK_PHRASES} 个快捷词`)
+  if (state.quickPhrases.includes(phrase)) return setError(t('error.phraseExists'))
+  if (state.quickPhrases.length >= MAX_QUICK_PHRASES) return setError(t('error.phraseLimit', { limit: MAX_QUICK_PHRASES }))
   state.quickPhrases.push(phrase)
   persistQuickPhrases()
   return true
@@ -949,7 +1185,7 @@ function updateQuickPhrase(index, value) {
   if (phrase === '') {
     state.quickPhrases.splice(index, 1)
   } else if (state.quickPhrases.some((item, itemIndex) => itemIndex !== index && item === phrase)) {
-    return setError('这个快捷词已经存在')
+    return setError(t('error.phraseExists'))
   } else {
     state.quickPhrases[index] = phrase
   }
@@ -970,20 +1206,20 @@ function draftPlacement(cards) {
 function draftCard(cards) {
   const draft = state.draft
   if (draft?.kind === 'new') return `<article class="thread-card draft-card first-session-card" data-card-id="draft" style="left:86px;top:82px;--thread-color:#3478f6">
-    <div class="thread-card-head"><span class="topic-dot"></span><strong>新会话</strong></div>
-    <form class="draft-branch-form" data-draft><textarea maxlength="4000" placeholder="输入第一条消息" ${draft.sending ? 'disabled' : ''}>${escapeHtml(draft.text)}</textarea>${draftActions(draft)}</form>
+    <div class="thread-card-head"><span class="topic-dot"></span><strong>${t('label.newSession')}</strong></div>
+    <form class="draft-branch-form" data-draft><textarea maxlength="4000" placeholder="${t('placeholder.firstMessage')}" ${draft.sending ? 'disabled' : ''}>${escapeHtml(draft.text)}</textarea>${draftActions(draft)}</form>
   </article>`
   const placement = draftPlacement(cards)
   if (draft === null || placement === null) return ''
   const continuing = draft.kind === 'continue'
   return `<article class="thread-card draft-card" data-card-id="draft" style="left:${placement.position.x}px;top:${placement.position.y}px;--thread-color:#3478f6">
-    <div class="thread-card-head"><span class="topic-dot"></span><strong>${continuing ? '新的追问' : '新的分支'}</strong></div>
-    <form class="draft-branch-form" data-draft>${draftQuickPhrases(draft)}<textarea maxlength="4000" placeholder="${continuing ? '输入追问' : '输入这个分支的新问题'}" ${draft.sending ? 'disabled' : ''}>${escapeHtml(draft.text)}</textarea>${draftActions(draft)}</form>
+    <div class="thread-card-head"><span class="topic-dot"></span><strong>${continuing ? t('label.newFollowUp') : t('label.newBranch')}</strong></div>
+    <form class="draft-branch-form" data-draft>${draftQuickPhrases(draft)}<textarea maxlength="4000" placeholder="${continuing ? t('placeholder.followUp') : t('placeholder.branchQuestion')}" ${draft.sending ? 'disabled' : ''}>${escapeHtml(draft.text)}</textarea>${draftActions(draft)}</form>
   </article>`
 }
 
 function selectionFollowupButton() {
-  return `<button class="selection-followup" type="button" data-action="follow-selection" hidden aria-label="基于所选内容创建追问" title="基于所选内容追问"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="M3 3.5h10v6.25H7.2L4 12.5V9.75H3Z"/><path d="M8 4.9v3.4M6.3 6.6h3.4"/></svg><span>追问</span></button>`
+  return `<button class="selection-followup" type="button" data-action="follow-selection" hidden aria-label="${t('action.followSelectionAria')}" title="${t('action.followSelection')}"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="M3 3.5h10v6.25H7.2L4 12.5V9.75H3Z"/><path d="M8 4.9v3.4M6.3 6.6h3.4"/></svg><span>${t('action.followUp')}</span></button>`
 }
 
 // Cards are mounted into the DOM only when they intersect the viewport
@@ -1035,7 +1271,7 @@ function syncCanvasViewport() {
 
 function renderCanvas() {
   const threads = state.workspace?.threads ?? []
-  if (threads.length === 0 && state.draft?.kind !== 'new') return `<section class="empty-canvas"><strong>当前工作目录还没有 DSH 对话。</strong><p>点击新会话，在画布中输入第一条消息。</p><div><button class="primary" type="button" data-action="create-session">新建会话</button></div></section>`
+  if (threads.length === 0 && state.draft?.kind !== 'new') return `<section class="empty-canvas"><strong>${t('empty.noConversations')}</strong><p>${t('empty.startHint')}</p><div><button class="primary" type="button" data-action="create-session">${t('action.createSession')}</button></div></section>`
   const allCards = conversationCards(threads)
   const graph = conversationGraphView(allCards)
   const cards = graph.cards
@@ -1066,22 +1302,22 @@ function isProcessMessage(message) {
 }
 
 function processSummary(text) {
-  return text.replace(/\s+/g, ' ').trim().slice(0, 140) || '工具调用记录'
+  return text.replace(/\s+/g, ' ').trim().slice(0, 140) || t('label.toolCallRecord')
 }
 
 function threadMessage(thread, message) {
   const isUser = message.kind === 'user'
-  const label = isUser ? '你' : message.kind === 'assistant' ? 'DSH' : message.kind === 'error' ? '错误' : '记录'
+  const label = isUser ? t('label.you') : message.kind === 'assistant' ? 'DSH' : message.kind === 'error' ? t('label.error') : t('label.record')
   const branch = message.kind === 'assistant' && Number.isInteger(message.sourceSeq)
-    ? `<button class="message-branch" data-action="open-branch" data-thread="${thread.id}" data-seq="${message.sourceSeq}" title="从此回答创建分支"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="M4.5 3v6a2.5 2.5 0 0 0 2.5 2.5H12"/><circle cx="4.5" cy="3" r="1.5"/><circle cx="11.5" cy="12" r="1.5"/></svg>分支</button>`
+    ? `<button class="message-branch" data-action="open-branch" data-thread="${thread.id}" data-seq="${message.sourceSeq}" title="${t('action.branchFromAnswer')}"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="M4.5 3v6a2.5 2.5 0 0 0 2.5 2.5H12"/><circle cx="4.5" cy="3" r="1.5"/><circle cx="11.5" cy="12" r="1.5"/></svg>${t('label.branch')}</button>`
     : ''
   const messageId = `${thread.id}:${message.sourceSeq ?? `${message.kind}:${message.at}`}`
   const collapsible = isProcessMessage(message)
   const expanded = state.expandedMessageIds.has(messageId)
-  const fold = collapsible ? `<button class="message-fold" data-action="toggle-message" data-message="${escapeHtml(messageId)}" aria-label="${expanded ? '收起过程记录' : '展开过程记录'}" title="${expanded ? '收起' : '展开'}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3.5 4.5 4.5L6 12.5"/></svg></button>` : ''
+  const fold = collapsible ? `<button class="message-fold" data-action="toggle-message" data-message="${escapeHtml(messageId)}" aria-label="${expanded ? t('action.collapseProcess') : t('action.expandProcess')}" title="${expanded ? t('action.collapse') : t('action.expand')}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3.5 4.5 4.5L6 12.5"/></svg></button>` : ''
   const process = Array.isArray(message.process) && message.process.length > 0 ? message.process : null
-  const body = message.pending && message.text === '' ? '<p class="message-streaming"><span class="streaming-dot"></span>正在回复</p>'
-    : `${collapsible && !expanded ? `<p class="message-summary">${escapeHtml(processSummary(message.text))}</p>` : renderMarkdown(message.text)}${message.pending ? '<p class="message-streaming"><span class="streaming-dot"></span>正在回复</p>' : ''}${process === null ? '' : processRecords(process, messageId)}`
+  const body = message.pending && message.text === '' ? `<p class="message-streaming"><span class="streaming-dot"></span>${t('label.replying')}</p>`
+    : `${collapsible && !expanded ? `<p class="message-summary">${escapeHtml(processSummary(message.text))}</p>` : renderMarkdown(message.text)}${message.pending ? `<p class="message-streaming"><span class="streaming-dot"></span>${t('label.replying')}</p>` : ''}${process === null ? '' : processRecords(process, messageId)}`
   const avatar = isUser ? '' : '<span class="message-avatar" aria-hidden="true"></span>'
   return `<article class="message message-${message.kind}${message.pending ? ' message-pending' : ''}${collapsible ? ' message-collapsible' : ''}${expanded ? ' expanded' : ''}" data-message-seq="${Number.isInteger(message.sourceSeq) ? message.sourceSeq : ''}"><header>${avatar}<span class="message-role">${label}</span><time>${formatTime(message.at)}</time>${branch}${fold}</header><div class="message-body">${body}</div></article>`
 }
@@ -1092,12 +1328,12 @@ function processRecords(process, messageId) {
   const entries = process.map((entry, index) => {
     const entryKey = `${key}:${index}`
     const entryExpanded = state.expandedMessageIds.has(entryKey)
-    const status = entry.error !== null ? '失败' : entry.result === null ? '等待结果' : '完成'
+    const status = entry.error !== null ? t('label.failed') : entry.result === null ? t('label.awaitingResult') : t('done')
     const argumentsHtml = entry.arguments === null || entry.arguments === '' ? '' : `<pre class="process-args">${escapeHtml(entry.arguments)}</pre>`
-    const outcomeHtml = entry.error !== null ? `<pre class="process-error">${escapeHtml(entry.error)}</pre>` : entry.result === null ? '' : `<pre class="process-result">${escapeHtml(entry.result)}</pre>`
-    return `<div class="process-entry${entryExpanded ? ' expanded' : ''}"><button class="process-entry-fold" data-action="toggle-message" data-message="${escapeHtml(entryKey)}"><span class="process-entry-name">${escapeHtml(entry.name)}</span><span class="process-status${entry.error !== null ? ' process-status-error' : entry.result === null ? ' process-status-pending' : ' process-status-done'}">${status}</span></button>${entryExpanded ? `<div class="process-entry-body">${argumentsHtml}${outcomeHtml}</div>` : ''}</div>`
+    const outcomeHtml = entry.error !== null ? `<pre class="process-error">${escapeHtml(localizeServerText(entry.error))}</pre>` : entry.result === null ? '' : `<pre class="process-result">${escapeHtml(localizeServerText(entry.result))}</pre>`
+    return `<div class="process-entry${entryExpanded ? ' expanded' : ''}"><button class="process-entry-fold" data-action="toggle-message" data-message="${escapeHtml(entryKey)}"><span class="process-entry-name">${escapeHtml(displayData(entry.name))}</span><span class="process-status${entry.error !== null ? ' process-status-error' : entry.result === null ? ' process-status-pending' : ' process-status-done'}">${status}</span></button>${entryExpanded ? `<div class="process-entry-body">${argumentsHtml}${outcomeHtml}</div>` : ''}</div>`
   }).join('')
-  return `<section class="process-records${expanded ? ' expanded' : ''}"><button class="process-records-fold" data-action="toggle-message" data-message="${escapeHtml(key)}"><span>${expanded ? '收起过程记录' : '过程记录'}</span><span class="process-count">${process.length}</span></button>${expanded ? entries : ''}</section>`
+  return `<section class="process-records${expanded ? ' expanded' : ''}"><button class="process-records-fold" data-action="toggle-message" data-message="${escapeHtml(key)}"><span>${expanded ? t('action.collapseProcess') : t('label.processRecords')}</span><span class="process-count">${process.length}</span></button>${expanded ? entries : ''}</section>`
 }
 
 function messagesForCard(card) {
@@ -1133,7 +1369,7 @@ function inspectorProcessEntries(messages) {
     if (message.kind === 'tool-result') {
       const previous = entries.at(-1)
       if (previous !== undefined && previous.result === null && previous.error === null) previous.result = message.text
-      else entries.push({ name: '工具结果', arguments: null, result: message.text, error: null })
+      else entries.push({ name: t('label.toolResult'), arguments: null, result: message.text, error: null })
     }
   }
   return entries
@@ -1145,16 +1381,16 @@ function renderCardInspector(card) {
   if (thread === null) return ''
   const process = inspectorProcessEntries(messages)
   const answer = card.answer === null
-    ? card.error === null ? '<p class="card-inspector-pending">等待助手回复</p>' : ''
-    : `<article class="card-inspector-answer">${renderMarkdown(card.answer.text)}${card.answer.pending ? '<p class="card-inspector-pending">正在回复</p>' : ''}</article>`
-  const error = card.error === null ? '' : `<section class="card-inspector-error" role="alert"><strong>本轮未完成</strong><p>${escapeHtml(card.error.text)}</p></section>`
+    ? card.error === null ? `<p class="card-inspector-pending">${t('label.awaitingAssistant')}</p>` : ''
+    : `<article class="card-inspector-answer">${renderMarkdown(card.answer.text)}${card.answer.pending ? `<p class="card-inspector-pending">${t('label.replying')}</p>` : ''}</article>`
+  const error = card.error === null ? '' : `<section class="card-inspector-error" role="alert"><strong>${t('label.turnIncomplete')}</strong><p>${escapeHtml(card.error.text)}</p></section>`
   const processRecordsHtml = process.length === 0 ? '' : processRecords(process, `${thread.id}:${card.id}:inspector`)
-  const continueAction = card.canContinue === true ? `<button type="button" data-action="open-continue" data-thread="${thread.id}" data-card="${escapeHtml(card.id)}"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="M2.5 3.5h11v7h-6l-3.5 2.5v-2.5h-1.5Z"/><path d="M8 5.5v3M6.5 7h3"/></svg>继续追问</button>` : ''
+  const continueAction = card.canContinue === true ? `<button type="button" data-action="open-continue" data-thread="${thread.id}" data-card="${escapeHtml(card.id)}"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="M2.5 3.5h11v7h-6l-3.5 2.5v-2.5h-1.5Z"/><path d="M8 5.5v3M6.5 7h3"/></svg>${t('action.continueFollowUp')}</button>` : ''
   const branch = Number.isInteger(card.answer?.sourceSeq)
-    ? `<button type="button" data-action="open-branch" data-thread="${thread.id}" data-card="${escapeHtml(card.id)}" data-seq="${card.answer.sourceSeq}"><svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="4" cy="3.5" r="1.5"/><circle cx="12" cy="3.5" r="1.5"/><circle cx="12" cy="12.5" r="1.5"/><path d="M5.5 3.5h2A2.5 2.5 0 0 1 10 6v5"/></svg>创建分支</button>`
+    ? `<button type="button" data-action="open-branch" data-thread="${thread.id}" data-card="${escapeHtml(card.id)}" data-seq="${card.answer.sourceSeq}"><svg aria-hidden="true" viewBox="0 0 16 16"><circle cx="4" cy="3.5" r="1.5"/><circle cx="12" cy="3.5" r="1.5"/><circle cx="12" cy="12.5" r="1.5"/><path d="M5.5 3.5h2A2.5 2.5 0 0 1 10 6v5"/></svg>${t('action.createBranch')}</button>`
     : ''
-  const openDshAction = `<button class="primary" type="button" data-action="open-dsh" data-thread="${thread.id}" data-seq="${Number.isInteger(card.answer?.sourceSeq) ? card.answer.sourceSeq : ''}"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="M7 3.5H4.5A1.5 1.5 0 0 0 3 5v6.5A1.5 1.5 0 0 0 4.5 13H11a1.5 1.5 0 0 0 1.5-1.5V9"/><path d="M9.5 3.5h3v3M12.4 3.6 7.5 8.5"/></svg>在 DSH 中打开</button>`
-  return `<aside class="card-inspector${state.inspectorOpening ? ' is-opening' : ''}" aria-label="卡片详情" data-inspector-card="${escapeHtml(card.id)}"><header class="card-inspector-head"><div><div class="card-inspector-meta"><span>第 ${card.turnIndex + 1} 轮</span>${card.error === null ? '' : '<span class="card-inspector-error-status">失败</span>'}${process.length > 0 ? `<span>工具 ${process.length}</span>` : ''}</div><h2>${escapeHtml(card.question)}</h2></div><button class="card-inspector-close" type="button" data-action="close-card-inspector" aria-label="关闭卡片详情" title="关闭"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="m4.5 4.5 7 7m0-7-7 7"/></svg></button></header><div class="card-inspector-scroll">${error}${answer}${processRecordsHtml}</div><footer class="card-inspector-actions">${continueAction}${branch}${openDshAction}</footer></aside>`
+  const openDshAction = `<button class="primary" type="button" data-action="open-dsh" data-thread="${thread.id}" data-seq="${Number.isInteger(card.answer?.sourceSeq) ? card.answer.sourceSeq : ''}"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="M7 3.5H4.5A1.5 1.5 0 0 0 3 5v6.5A1.5 1.5 0 0 0 4.5 13H11a1.5 1.5 0 0 0 1.5-1.5V9"/><path d="M9.5 3.5h3v3M12.4 3.6 7.5 8.5"/></svg>${t('action.openInDsh')}</button>`
+  return `<aside class="card-inspector${state.inspectorOpening ? ' is-opening' : ''}" aria-label="${t('aria.cardDetails')}" data-inspector-card="${escapeHtml(card.id)}"><header class="card-inspector-head"><div><div class="card-inspector-meta"><span>${t('label.turn', { turn: card.turnIndex + 1 })}</span>${card.error === null ? '' : `<span class="card-inspector-error-status">${t('label.failed')}</span>`}${process.length > 0 ? `<span>${t('label.tools', { count: process.length })}</span>` : ''}</div><h2>${escapeHtml(card.question)}</h2></div><button class="card-inspector-close" type="button" data-action="close-card-inspector" aria-label="${t('aria.closeCardDetails')}" title="${t('action.close')}"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="m4.5 4.5 7 7m0-7-7 7"/></svg></button></header><div class="card-inspector-scroll">${error}${answer}${processRecordsHtml}</div><footer class="card-inspector-actions">${continueAction}${branch}${openDshAction}</footer></aside>`
 }
 
 function renderThread() {
@@ -1163,7 +1399,7 @@ function renderThread() {
   const messages = messagesFor(thread)
   const waiting = state.pendingReplies.has(thread.dshSessionId)
   const latestAssistantSeq = [...messages].reverse().find(message => Number.isInteger(message.sourceSeq))?.sourceSeq
-  return `<section class="detail-view"><header class="detail-head"><div class="detail-head-title"><div class="detail-head-meta"><span class="detail-badge">${thread.parentId === null ? '会话' : '分支'}</span>${thread.dshSessionTitle ?? thread.title ? `<span class="detail-subtitle">${escapeHtml(thread.dshSessionTitle ?? thread.title)}</span>` : ''}</div><h1>${escapeHtml(questionFor(thread))}</h1></div><div class="detail-head-actions"><button data-action="open-dsh" data-thread="${thread.id}" data-seq="${Number.isInteger(latestAssistantSeq) ? latestAssistantSeq : ''}" title="在原生对话中打开此会话">在 DSH 中打开</button><button data-action="open-branch" data-thread="${thread.id}" title="基于最新回答创建分支">创建分支</button><button class="primary" data-action="show-canvas">返回画布</button></div></header><div class="detail-scroll">${messages.map(message => threadMessage(thread, message)).join('') || '<div class="note-empty">等待这条会话的第一条消息。</div>'}</div><form class="message-composer" data-compose="${thread.id}"><textarea maxlength="4000" placeholder="继续当前会话…" ${waiting ? 'disabled' : ''}></textarea><button class="primary" type="submit" ${waiting ? 'disabled' : ''}>${waiting ? '等待回复' : '发送'}</button></form></section>`
+  return `<section class="detail-view"><header class="detail-head"><div class="detail-head-title"><div class="detail-head-meta"><span class="detail-badge">${thread.parentId === null ? t('label.session') : t('label.branch')}</span>${thread.dshSessionTitle ?? thread.title ? `<span class="detail-subtitle">${escapeHtml(thread.dshSessionTitle ?? thread.title)}</span>` : ''}</div><h1>${escapeHtml(questionFor(thread))}</h1></div><div class="detail-head-actions"><button data-action="open-dsh" data-thread="${thread.id}" data-seq="${Number.isInteger(latestAssistantSeq) ? latestAssistantSeq : ''}" title="${t('action.openInNativeChat')}">${t('action.openInDsh')}</button><button data-action="open-branch" data-thread="${thread.id}" title="${t('action.branchFromLatest')}">${t('action.createBranch')}</button><button class="primary" data-action="show-canvas">${t('action.backToCanvas')}</button></div></header><div class="detail-scroll">${messages.map(message => threadMessage(thread, message)).join('') || `<div class="note-empty">${t('empty.awaitingFirstMessage')}</div>`}</div><form class="message-composer" data-compose="${thread.id}"><textarea maxlength="4000" placeholder="${t('placeholder.continueSession')}" ${waiting ? 'disabled' : ''}></textarea><button class="primary" type="submit" ${waiting ? 'disabled' : ''}>${waiting ? t('label.waitingReply') : t('action.send')}</button></form></section>`
 }
 
 function render() {
@@ -1198,16 +1434,16 @@ function render() {
   const view = state.mode === 'thread' ? renderThread() : renderCanvas()
   const choices = workspaceChoices()
   const selectedWorkspaceId = state.selectedDshWorkspaceId ?? workspace?.id
-  const canvasControls = state.mode === 'canvas' && (threads.length > 0 || state.draft?.kind === 'new') ? `<div class="canvas-controls"><button data-action="layout" title="整理节点" aria-label="整理节点"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="9" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="2.5" y="9" width="4.5" height="4.5" rx="1"/><rect x="9" y="9" width="4.5" height="4.5" rx="1"/></svg>整理</button><button data-action="focus-active" title="定位到当前会话" aria-label="定位到当前会话"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="8" cy="8" r="3.2"/><path d="M8 1.5v2.6M8 11.9v2.6M1.5 8h2.6M11.9 8h2.6"/></svg>定位</button><button data-action="zoom-out" aria-label="缩小" title="缩小"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M3.5 8h9"/></svg></button><span>${Math.round(state.zoom * 100)}%</span><button data-action="zoom-in" aria-label="放大" title="放大"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M8 3.5v9M3.5 8h9"/></svg></button></div>` : ''
+  const canvasControls = state.mode === 'canvas' && (threads.length > 0 || state.draft?.kind === 'new') ? `<div class="canvas-controls"><button data-action="layout" title="${t('action.arrange')}" aria-label="${t('action.arrange')}"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="9" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="2.5" y="9" width="4.5" height="4.5" rx="1"/><rect x="9" y="9" width="4.5" height="4.5" rx="1"/></svg>${t('arrangeShort')}</button><button data-action="focus-active" title="${t('action.focusCurrent')}" aria-label="${t('action.focusCurrent')}"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="8" cy="8" r="3.2"/><path d="M8 1.5v2.6M8 11.9v2.6M1.5 8h2.6M11.9 8h2.6"/></svg>${t('focusShort')}</button><button data-action="zoom-out" aria-label="${t('action.zoomOut')}" title="${t('action.zoomOut')}"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M3.5 8h9"/></svg></button><span>${Math.round(state.zoom * 100)}%</span><button data-action="zoom-in" aria-label="${t('action.zoomIn')}" title="${t('action.zoomIn')}"><svg aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M8 3.5v9M3.5 8h9"/></svg></button></div>` : ''
   const detailAvailable = currentThread() !== null
   // The map page renders its own Dialogue/Session Map switch only when it is
   // opened standalone; inside the DSH overlay the draggable switch injected by
   // the client half is the single control, so the embedded one is omitted.
   const viewSwitch = window.parent === window
-    ? `<div class="view-switch" role="group" aria-label="视图切换"><button data-action="close" type="button" aria-pressed="false">对话</button><button class="active" type="button" aria-pressed="true">会话地图</button></div>`
+    ? `<div class="view-switch" role="group" aria-label="${t('viewSwitch')}"><button data-action="close" type="button" aria-pressed="false">${t('dialog')}</button><button class="active" type="button" aria-pressed="true">${t('map')}</button></div>`
     : ''
-  const canvasTabs = `<nav class="canvas-tabs" aria-label="会话地图视图"><button class="${state.mode === 'canvas' ? 'active' : ''}" data-action="show-canvas">地图</button><button class="${state.mode === 'thread' ? 'active' : ''}" data-action="show-thread" data-thread="${state.activeId ?? ''}" ${detailAvailable ? '' : 'disabled'}>详情</button></nav>`
-  app.innerHTML = `<main class="synapse-shell ${state.sidebarCollapsed ? 'sidebar-collapsed' : ''}"><aside class="sidebar"><div class="sidebar-brand-row"><div class="brand" aria-label="Synapse"><svg class="brand-mark" aria-hidden="true" viewBox="0 0 32 32" fill="none"><path d="M9 10.5 16 7l7 3.5M9 10.5v8L16 22m0-15v15m7-11.5v8L16 22"/><circle cx="9" cy="10" r="2.5"/><circle cx="23" cy="10" r="2.5"/><circle cx="16" cy="23" r="2.5"/></svg><strong>Synapse</strong></div><button class="sidebar-toggle" type="button" data-action="toggle-sidebar" aria-label="${state.sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'}" title="${state.sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'}"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.75" y="1.75" width="12.5" height="12.5" rx="2.25"/><path d="M6 2v12"/></svg></button></div><button class="new-workspace" type="button" data-action="create-session" ${state.draft !== null ? 'disabled' : ''}><svg class="new-session-icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25"/><path d="M8 4.75v6.5M4.75 8h6.5"/></svg><span>新会话</span></button><label class="workspace-label"><span>工作区</span><span class="workspace-select"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="M2.5 4.75h3l1.2 1.5h6.8v5.5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1Z"/></svg><select data-action="select-workspace" aria-label="选择工作区" ${state.draft !== null ? 'disabled' : ''}>${choices.map(item => `<option value="${item.id}" title="${escapeHtml(item.path ?? item.title)}" ${item.id === selectedWorkspaceId ? 'selected' : ''}>${escapeHtml(item.title)}</option>`).join('')}</select></span></label><div class="sidebar-heading"><span>会话</span></div><nav class="thread-tree">${threads.map(thread => `<button class="tree-row ${thread.id === state.activeId ? 'active' : ''}" data-action="select-thread" data-thread="${thread.id}" style="--thread-color:#374151"><span class="tree-dot"></span><span>${escapeHtml(threadListTitle(thread))}</span>${thread.parentId === null ? '' : '<i>分支</i>'}</button>`).join('') || '<p class="tree-empty">暂未同步会话</p>'}</nav></aside><header class="topbar">${viewSwitch}${canvasControls}</header><section class="main-stage">${state.error ? `<div class="status-message" role="alert"><span>${escapeHtml(state.error)}</span><button data-action="dismiss-error" aria-label="关闭" title="关闭">×</button></div>` : ''}${canvasTabs}${view}${selectionFollowupButton()}</section></main>`
+  const canvasTabs = `<nav class="canvas-tabs" aria-label="${t('aria.mapTabs')}"><button class="${state.mode === 'canvas' ? 'active' : ''}" data-action="show-canvas">${t('tabMap')}</button><button class="${state.mode === 'thread' ? 'active' : ''}" data-action="show-thread" data-thread="${state.activeId ?? ''}" ${detailAvailable ? '' : 'disabled'}>${t('label.details')}</button></nav>`
+  app.innerHTML = `<main class="synapse-shell ${state.sidebarCollapsed ? 'sidebar-collapsed' : ''}"><aside class="sidebar"><div class="sidebar-brand-row"><div class="brand" aria-label="Synapse"><svg class="brand-mark" aria-hidden="true" viewBox="0 0 32 32" fill="none"><path d="M9 10.5 16 7l7 3.5M9 10.5v8L16 22m0-15v15m7-11.5v8L16 22"/><circle cx="9" cy="10" r="2.5"/><circle cx="23" cy="10" r="2.5"/><circle cx="16" cy="23" r="2.5"/></svg><strong>Synapse</strong></div><button class="sidebar-toggle" type="button" data-action="toggle-sidebar" aria-label="${state.sidebarCollapsed ? t('aria.expandSidebar') : t('aria.collapseSidebar')}" title="${state.sidebarCollapsed ? t('aria.expandSidebar') : t('aria.collapseSidebar')}"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.75" y="1.75" width="12.5" height="12.5" rx="2.25"/><path d="M6 2v12"/></svg></button></div><button class="new-workspace" type="button" data-action="create-session" ${state.draft !== null ? 'disabled' : ''}><svg class="new-session-icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.25"/><path d="M8 4.75v6.5M4.75 8h6.5"/></svg><span>${t('label.newSession')}</span></button><label class="workspace-label"><span>${t('label.workspace')}</span><span class="workspace-select"><svg aria-hidden="true" viewBox="0 0 16 16"><path d="M2.5 4.75h3l1.2 1.5h6.8v5.5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1Z"/></svg><select data-action="select-workspace" aria-label="${t('aria.selectWorkspace')}" ${state.draft !== null ? 'disabled' : ''}>${choices.map(item => `<option value="${item.id}" title="${escapeHtml(item.path ?? item.title)}" ${item.id === selectedWorkspaceId ? 'selected' : ''}>${escapeHtml(item.title)}</option>`).join('')}</select></span></label><div class="sidebar-heading"><span>${t('label.sessions')}</span></div><nav class="thread-tree">${threads.map(thread => `<button class="tree-row ${thread.id === state.activeId ? 'active' : ''}" data-action="select-thread" data-thread="${thread.id}" style="--thread-color:#374151"><span class="tree-dot"></span><span>${escapeHtml(threadListTitle(thread))}</span>${thread.parentId === null ? '' : `<i>${t('label.branch')}</i>`}</button>`).join('') || `<p class="tree-empty">${t('empty.noSessions')}</p>`}</nav></aside><header class="topbar">${viewSwitch}${canvasControls}</header><section class="main-stage">${state.error ? `<div class="status-message" role="alert"><span>${escapeHtml(state.error)}</span><button data-action="dismiss-error" aria-label="${t('action.close')}" title="${t('action.close')}">×</button></div>` : ''}${canvasTabs}${view}${selectionFollowupButton()}</section></main>`
   installDragging()
   cacheCardConnectors()
   // The initial camera from renderCanvas is inset (viewport not laid out yet);
@@ -1617,8 +1853,8 @@ app.addEventListener('click', async event => {
         const visibleCards = conversationGraphView(allCards, nextCollapsed).cards
         const visibleIds = new Set(visibleCards.map(card => card.id))
         const draftParentId = draftPlacement(allCards)?.parent.id
-        if (draftParentId !== undefined && !visibleIds.has(draftParentId)) return setError('请先完成或取消正在编辑的追问或分支')
-        if (state.activeId !== null && !visibleCards.some(card => card.dshThreadId === state.activeId)) return setError('当前会话位于这个后续分支中，请先切换会话')
+        if (draftParentId !== undefined && !visibleIds.has(draftParentId)) return setError(t('error.finishDraft'))
+        if (state.activeId !== null && !visibleCards.some(card => card.dshThreadId === state.activeId)) return setError(t('error.sessionInBranch'))
       }
       collapsing ? state.collapsedCardIds.add(cardId) : state.collapsedCardIds.delete(cardId)
       persistCollapsedCards()
@@ -1628,7 +1864,7 @@ app.addEventListener('click', async event => {
     if (button.dataset.action === 'open-continue' && thread !== undefined) openContinue(thread, button.dataset.card)
     if (button.dataset.action === 'open-branch' && thread !== undefined) {
       const requestedSeq = Number(button.dataset.seq)
-      if (button.dataset.card !== undefined && !Number.isInteger(requestedSeq)) return setError('请等待这张卡片的最终回答后再创建分支')
+      if (button.dataset.card !== undefined && !Number.isInteger(requestedSeq)) return setError(t('error.waitForFinalAnswer'))
       const fallbackSeq = latestMessage(thread, 'assistant')?.sourceSeq
       openBranch(thread, Number.isInteger(requestedSeq) ? requestedSeq : fallbackSeq, button.dataset.card)
     }
@@ -1701,6 +1937,17 @@ window.addEventListener('message', event => {
   }
   if (data.type === 'synapse:theme') {
     document.documentElement.dataset.theme = data.dark === true ? 'dark' : 'light'
+  }
+  // The parent mirrors the DSH UI language; the map page re-renders its copy
+  // (including the standalone switch) on every change.
+  if (data.type === 'synapse:locale') {
+    const next = typeof data.locale === 'string' && Object.hasOwn(COPY, data.locale) ? data.locale : 'en'
+    if (next !== locale) {
+      locale = next
+      document.documentElement.lang = locale
+      markdownCache.clear()
+      render()
+    }
   }
   if (data.type === 'synapse:workspaces') {
     state.dshWorkspaces = Array.isArray(data.workspaces) ? data.workspaces.filter(workspace => typeof workspace?.id === 'string' && typeof workspace.title === 'string' && Array.isArray(workspace.sessionIds)) : []
@@ -1792,8 +2039,8 @@ function applyLiveReplyToCard(sessionId) {
   if (!(answer instanceof HTMLElement)) return
   const text = live.text
   answer.innerHTML = text.trim() === ''
-    ? '<p class="thread-answer-pending">正在回复</p>'
-    : `${renderMarkdown(text)}<p class="thread-answer-pending">正在回复</p>`
+    ? `<p class="thread-answer-pending">${t('label.replying')}</p>`
+    : `${renderMarkdown(text)}<p class="thread-answer-pending">${t('label.replying')}</p>`
 }
 function scheduleLiveRender() {
   if (liveRenderTimer !== 0 || !canReplaceView()) return

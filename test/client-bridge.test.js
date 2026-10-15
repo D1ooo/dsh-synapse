@@ -256,13 +256,33 @@ async function loadBridge(options = {}) {
     },
   }
 
-  let dispose = () => {}
+  let activeLocale = options.locale ?? 'zh'
+  const localeDictionaries = new Map()
+  const localeListeners = new Set()
+  const locale = {
+    register: (ns, dictionaries) => {
+      localeDictionaries.set(ns, dictionaries)
+      return () => { localeDictionaries.delete(ns) }
+    },
+    bind: ns => key => {
+      const dictionaries = localeDictionaries.get(ns)
+      return dictionaries?.[activeLocale]?.[key] ?? dictionaries?.en?.[key] ?? key
+    },
+    subscribe: listener => {
+      localeListeners.add(listener)
+      return () => { localeListeners.delete(listener) }
+    },
+    getSnapshot: () => ({ active: activeLocale, revision: 0 }),
+  }
+
+  const disposers = []
   const ctx = {
     sessions,
     workspaces,
     uiWorkspace,
     uiConversation,
-    effect: effect => { dispose = effect() },
+    locale,
+    effect: effect => { disposers.push(effect()) },
   }
 
   class HTMLElement {}
@@ -338,7 +358,12 @@ async function loadBridge(options = {}) {
     calls,
     posted,
     chatActivated,
-    dispose: () => dispose(),
+    dispose: () => { for (const release of disposers.splice(0).reverse()) release() },
+    dictionaries: localeDictionaries,
+    setLocale: value => {
+      activeLocale = value
+      for (const listener of [...localeListeners]) listener()
+    },
     // Replace a same-id generation without dropping its retention.
     retire: id => { bindings.delete(id) },
     // Flip the Host-reported running bit the list row carries.
@@ -363,7 +388,7 @@ async function loadBridge(options = {}) {
 test('declares the v0.1.7 Client services it calls', async () => {
   const bridge = await loadBridge()
 
-  assert.deepEqual(bridge.inject, ['sessions', 'workspaces', 'uiWorkspace', 'uiConversation'])
+  assert.deepEqual(bridge.inject, ['sessions', 'workspaces', 'uiWorkspace', 'uiConversation', 'locale'])
 })
 
 test('mounts one switch and one hidden map overlay into the page', async () => {
@@ -603,6 +628,7 @@ test('declares the client package of every service the bridge injects', async ()
     workspaces: '@deepseek-ai/dsh-api-workspace-controller',
     uiWorkspace: '@deepseek-ai/dsh-client-ui-workspace',
     uiConversation: '@deepseek-ai/dsh-client-ui-conversation',
+    locale: '@deepseek-ai/dsh-client-locale',
   }
   const bridge = await loadBridge()
 

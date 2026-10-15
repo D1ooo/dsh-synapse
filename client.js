@@ -5,8 +5,6 @@ window.__ModuleLoader__.load({
     // Consumer identity for owned Session references. The Client records
     // positive reference counts per source; nothing else reads this string.
     const SESSION_SOURCE = 'synapse'
-    // Shown when a Session is gone or no longer reachable from this browser.
-    const NO_SESSION = '关联的 DSH 会话已不可用'
     const currentSession = ctx => {
       const snapshot = ctx.sessions.list.getSnapshot()
       // 0.1.7 removed `list.current`: the Main view's own reference count is the
@@ -22,23 +20,56 @@ window.__ModuleLoader__.load({
         return session === undefined ? null : { id, title: session.displayTitle, cwd: session.cwd ?? null, parentId: session.parentId ?? null, blank: session.blank }
       }).filter(Boolean)
     }
-    const workspaceSnapshot = ctx => {
+    const workspaceSnapshot = (ctx, t) => {
       const sessions = ctx.sessions.list.getSnapshot()
       const snapshot = ctx.workspaces.list.getSnapshot()
       const accounted = new Set(snapshot.items.flatMap(workspace => workspace.sessionIds))
       return [
         ...snapshot.items.map(workspace => ({ id: workspace.workspaceId, title: workspace.title, path: workspace.path, sessionIds: workspace.sessionIds })),
-        { id: 'dsh-ungrouped', title: '未分组', path: null, sessionIds: sessions.ids.filter(id => !accounted.has(id)) },
+        { id: 'dsh-ungrouped', title: t('ungrouped'), path: null, sessionIds: sessions.ids.filter(id => !accounted.has(id)) },
       ]
     }
 
-    module.exports.inject = ['sessions', 'workspaces', 'uiWorkspace', 'uiConversation']
+    module.exports.inject = ['sessions', 'workspaces', 'uiWorkspace', 'uiConversation', 'locale']
     module.exports.apply = ctx => {
       // A re-mount of this module (hot reload, restored page) must not leave
       // the previous injection behind: a stale host would keep painting an old
       // switch that answers no pointer events.
       for (const stale of document.querySelectorAll('.dsh-synapse-host')) stale.remove()
       for (const stale of document.querySelectorAll('.dsh-synapse-style')) stale.remove()
+      // Every string this half renders or sends lives in this dictionary so
+      // the switch and the bridge copy follow the active UI language.
+      ctx.effect(() => ctx.locale.register('dsh-synapse', {
+        zh: {
+          dialog: '对话',
+          map: '会话地图',
+          viewSwitch: '视图切换',
+          ungrouped: '未分组',
+          fallbackBranch: 'DSH 分支',
+          fallbackSession: '新会话',
+          noSession: '关联的 DSH 会话已不可用',
+          messageNotAccepted: 'DSH 未接受这条消息',
+          emptyMessage: '消息不能为空',
+          sendFailed: 'DSH 消息发送失败',
+          forkFailed: 'DSH 分支创建失败，请确认源会话已经完成当前轮次',
+          createFailed: 'DSH 会话创建失败，请先在 DSH 选择工作目录',
+        },
+        en: {
+          dialog: 'Dialogue',
+          map: 'Session Map',
+          viewSwitch: 'View switch',
+          ungrouped: 'Ungrouped',
+          fallbackBranch: 'DSH branch',
+          fallbackSession: 'New session',
+          noSession: 'The linked DSH session is unavailable',
+          messageNotAccepted: 'DSH did not accept this message',
+          emptyMessage: 'The message cannot be empty',
+          sendFailed: 'Failed to send the DSH message',
+          forkFailed: 'Failed to create the DSH branch; make sure the source session has finished its current turn',
+          createFailed: 'Failed to create the DSH session; choose a working directory in DSH first',
+        },
+      }), 'dsh-synapse: dictionaries')
+      const t = ctx.locale.bind('dsh-synapse')
       const prompt = async (sessionId, text) => {
         // 0.1.7 owns Session lifetime explicitly: `scope()` only borrows an
         // already-retained generation, so sending needs a reference of our own.
@@ -48,11 +79,11 @@ window.__ModuleLoader__.load({
           await reference.ready
         } catch {
           reference?.release()
-          throw new Error(NO_SESSION)
+          throw new Error(t('noSession'))
         }
         try {
           const result = await reference.binding.session.prompt([{ type: 'text', text }], 'queue')
-          if (!result.ok) throw new Error(result.error?.message ?? 'DSH 未接受这条消息')
+          if (!result.ok) throw new Error(result.error?.message ?? t('messageNotAccepted'))
         } finally {
           reference.release()
         }
@@ -63,13 +94,21 @@ window.__ModuleLoader__.load({
       document.head.append(style)
       const host = document.createElement('div')
       host.className = 'dsh-synapse-host'
-      host.innerHTML = '<div class="dsh-synapse-switch" role="group" aria-label="视图切换"><button type="button" data-view="dialog" class="active" aria-pressed="true">对话</button><button type="button" data-view="map" aria-pressed="false">会话地图</button></div><section class="dsh-synapse-overlay" hidden><iframe title="会话地图" src="/synapse/"></iframe></section>'
+      host.innerHTML = '<div class="dsh-synapse-switch" role="group"><button type="button" data-view="dialog" class="active" aria-pressed="true"></button><button type="button" data-view="map" aria-pressed="false"></button></div><section class="dsh-synapse-overlay" hidden><iframe src="/synapse/"></iframe></section>'
       document.body.append(host)
       const dialogButton = host.querySelector('[data-view="dialog"]')
       const mapButton = host.querySelector('[data-view="map"]')
       const overlay = host.querySelector('.dsh-synapse-overlay')
       const frame = host.querySelector('iframe')
       const switchBar = host.querySelector('.dsh-synapse-switch')
+      // Labels follow the active language and are re-applied on every change.
+      const applyLocale = () => {
+        switchBar.setAttribute('aria-label', t('viewSwitch'))
+        dialogButton.textContent = t('dialog')
+        mapButton.textContent = t('map')
+        frame.setAttribute('title', t('map'))
+      }
+      applyLocale()
 
       const setView = view => {
         const showingMap = view === 'map'
@@ -87,6 +126,8 @@ window.__ModuleLoader__.load({
         reapplyPosition()
       }
       const send = (type, payload) => { frame.contentWindow?.postMessage({ source: 'dsh-synapse', type, ...payload }, location.origin) }
+      // The map page renders its own copy, so it receives the active language.
+      const syncLocale = () => { send('synapse:locale', { locale: ctx.locale.getSnapshot().active }) }
       // The top switch is draggable: the user can park it anywhere inside the
       // viewport, and the spot survives reloads per browser profile. A drag
       // beyond the threshold becomes a move and swallows its trailing click;
@@ -310,8 +351,9 @@ window.__ModuleLoader__.load({
         syncLiveSessions()
         publishLiveSessions()
         syncTheme()
+        syncLocale()
         if (!overlay.hidden) {
-          send('synapse:workspaces', { workspaces: workspaceSnapshot(ctx) })
+          send('synapse:workspaces', { workspaces: workspaceSnapshot(ctx, t) })
           send('synapse:current-session', { session: currentSession(ctx) })
         }
       }
@@ -348,13 +390,14 @@ window.__ModuleLoader__.load({
         if (event.data.type === 'synapse:close') return close()
         if (event.data.type === 'synapse:map-ready') return showMapOverlay()
         if (event.data.type === 'synapse:request-current') {
-          send('synapse:workspaces', { workspaces: workspaceSnapshot(ctx) })
+          syncLocale()
+          send('synapse:workspaces', { workspaces: workspaceSnapshot(ctx, t) })
           return send('synapse:current-session', { session: currentSession(ctx) })
         }
         if (event.data.type === 'synapse:open-session') {
           // 0.1.7 moved navigation out of the Session Controller: selecting a
           // Session and showing its Conversation is one Workspace UI action.
-          try { ctx.uiWorkspace.openSession(event.data.sessionId); close() } catch { send('synapse:bridge-error', { message: NO_SESSION }) }
+          try { ctx.uiWorkspace.openSession(event.data.sessionId); close() } catch { send('synapse:bridge-error', { message: t('noSession') }) }
           // Best-effort anchor to the requested turn: chat nodes expose their
           // source event seq (anchorSeq) and render with data-chat-anchor-key,
           // so resolve seq -> node key -> scroll once the view materializes.
@@ -391,24 +434,24 @@ window.__ModuleLoader__.load({
           // Bidirectional current-session sync: switch DSH's current session
           // without closing the map; the sessions-list subscription re-sends
           // synapse:current-session so the map follows the new highlight.
-          try { ctx.uiWorkspace.openSession(event.data.sessionId) } catch { send('synapse:bridge-error', { message: NO_SESSION }) }
+          try { ctx.uiWorkspace.openSession(event.data.sessionId) } catch { send('synapse:bridge-error', { message: t('noSession') }) }
           return
         }
         if (event.data.type === 'synapse:fork-session') {
           const atSeq = Number.isInteger(event.data.atSeq) ? event.data.atSeq : undefined
           ctx.sessions.fork({ sessionId: event.data.sessionId, atSeq, increaseTitle: true }).then(id => {
             const snapshot = ctx.sessions.list.getSnapshot()
-            send('synapse:forked-session', { requestId: event.data.requestId, session: { id, title: snapshot.byId[id]?.displayTitle ?? 'DSH 分支' } })
-          }).catch(() => { send('synapse:bridge-error', { message: 'DSH 分支创建失败，请确认源会话已经完成当前轮次' }) })
+            send('synapse:forked-session', { requestId: event.data.requestId, session: { id, title: snapshot.byId[id]?.displayTitle ?? t('fallbackBranch') } })
+          }).catch(() => { send('synapse:bridge-error', { message: t('forkFailed') }) })
           return
         }
         if (event.data.type === 'synapse:send-message') {
           const text = typeof event.data.text === 'string' ? event.data.text.trim() : ''
-          if (text === '') return send('synapse:bridge-error', { requestId: event.data.requestId, message: '消息不能为空' })
+          if (text === '') return send('synapse:bridge-error', { requestId: event.data.requestId, message: t('emptyMessage') })
           prompt(event.data.sessionId, text).then(() => {
             send('synapse:message-sent', { requestId: event.data.requestId, sessionId: event.data.sessionId })
           }).catch(error => {
-            send('synapse:bridge-error', { requestId: event.data.requestId, message: error instanceof Error ? error.message : 'DSH 消息发送失败' })
+            send('synapse:bridge-error', { requestId: event.data.requestId, message: error instanceof Error ? error.message : t('sendFailed') })
           })
           return
         }
@@ -418,8 +461,8 @@ window.__ModuleLoader__.load({
           const create = workspaceId === undefined ? ctx.sessions.create(cwd === undefined ? {} : { cwd }) : ctx.sessions.create({ workspaceId })
           create.then(id => {
             const snapshot = ctx.sessions.list.getSnapshot()
-            send('synapse:created-session', { requestId: event.data.requestId, session: { id, title: snapshot.byId[id]?.displayTitle ?? '新会话', cwd: snapshot.byId[id]?.cwd ?? cwd ?? null } })
-          }).catch(() => { send('synapse:bridge-error', { requestId: event.data.requestId, message: 'DSH 会话创建失败，请先在 DSH 选择工作目录' }) })
+            send('synapse:created-session', { requestId: event.data.requestId, session: { id, title: snapshot.byId[id]?.displayTitle ?? t('fallbackSession'), cwd: snapshot.byId[id]?.cwd ?? cwd ?? null } })
+          }).catch(() => { send('synapse:bridge-error', { requestId: event.data.requestId, message: t('createFailed') }) })
         }
       }
       const onKeyDown = event => { if (event.key === 'Escape' && !overlay.hidden) close() }
@@ -433,6 +476,9 @@ window.__ModuleLoader__.load({
       }
       const unsubscribeSessions = ctx.sessions.list.subscribe(syncCurrentSession)
       const unsubscribeWorkspaces = ctx.workspaces.list.subscribe(syncCurrentSession)
+      // Keep the switch labels and the map page copy in step with the UI
+      // language, including changes made while the map is open.
+      ctx.effect(() => ctx.locale.subscribe(() => { applyLocale(); syncLocale() }), 'dsh-synapse: locale')
       // The click that a drag gesture leaves behind must not switch the view.
       const onDialogClick = () => { if (suppressClick) { suppressClick = false; return } close() }
       const onMapClick = () => { if (suppressClick) { suppressClick = false; return } open() }
